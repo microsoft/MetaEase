@@ -11,5 +11,5 @@ tqdm
 keras
 pandas
 statsmodels
-tensorflow==1.15
+tensorflow==2.12.1
 matplotlib
