@@ -1,0 +1,14 @@
+num total edges 202 num subgraph edges 156 num inter-cluster edges 46
+complete graph: nodes 74 edges 202
+2-shortest paths num intra cluster paths 123, num total paths 619 frac 0.19870759257074702
+4-shortest paths num intra cluster paths 458, num total paths 1205 frac 0.3800829872364456
+10-shortest paths num intra cluster paths 1803, num total paths 2963 frac 0.608504893483461
+16-shortest paths num intra cluster paths 3372, num total paths 4721 frac 0.7142554542015981
+cluster 0: nodes 9 edges 18
+cluster 1: nodes 14 edges 36
+cluster 2: nodes 8 edges 14
+cluster 3: nodes 8 edges 14
+cluster 4: nodes 7 edges 12
+cluster 5: nodes 12 edges 30
+cluster 6: nodes 8 edges 18
+cluster 7: nodes 8 edges 14

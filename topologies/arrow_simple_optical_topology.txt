@@ -1,0 +1,6 @@
+fiber_id,fiber_ip_path,num_wave
+1,A-B,4
+2,B-C,12
+3,C-D,4
+4,B-C,3
+5,B-C,2
