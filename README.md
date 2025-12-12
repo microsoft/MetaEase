@@ -75,6 +75,8 @@ List of all methods:
 - HillClimbing
 - GradientSampleBased
 
+Note: The random seed used to produce the plots were time, so you may not get the exact results for the baselines.
+
 ## Traffice Engineering (TE) plots
 ```bash
 python paper.py --problem TE_DemandPinning_abilene --method MetaEase --base-save-dir ../logs_final_TE

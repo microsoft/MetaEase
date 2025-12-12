@@ -73,8 +73,8 @@ def get_problem_description(args) -> dict:
             problem_description["num_random_seed_samples"] = 0
             problem_description["num_samples"] = 20
             problem_description["num_iterations"] = 1000
-            problem_description["disable_gradient_ascent"] = False
-            problem_description["disable_guassian_process"] = False
+            problem_description["disable_gradient_ascent"] = True
+            problem_description["disable_guassian_process"] = True
             # problem_description["max_num_scalable_klee_inputs"] = 1000000000
             # problem_description["randomized_gradient_ascent"] = True
             # problem_description["num_vars_in_randomized_gradient_ascent"] = 1000000000

@@ -1,53 +1,56 @@
-#!/bin/bash
-# problem="tsp"
-# baseline_max_time=3600
-# for topology in "abilene" "b4-teavar" "swan"
-# do
-#     python paper.py --problem TE_DemandPinning_$topology --method HillClimbing --baseline-max-time $baseline_max_time
-# done
+# Function to run experiments for a problem across multiple settings
+run_problem_on_settings() {
+    local problem_base=$1  # e.g., "TE_DemandPinning"
+    shift
+    local settings=("$@")  # e.g., ("swan" "abilene")
+    local base_save_dir=${BASE_SAVE_DIR:-"../logs_final_${problem_base}"}
 
-python paper.py --problem TE_DemandPinning_abilene --method MetaEase
-python paper.py --problem TE_DemandPinning_abilene --method HillClimbing --baseline-max-time 600 &
-python paper.py --problem TE_DemandPinning_abilene --method SimulatedAnnealing --baseline-max-time 600 &
-python paper.py --problem TE_DemandPinning_abilene --method Random --baseline-max-time 600 &
-python paper.py --problem TE_DemandPinning_abilene --method GradientSampleBased --baseline-max-time 600 &
-wait
+    if [ ${#settings[@]} -eq 0 ]; then
+        echo "Error: No settings provided for ${problem_base}"
+        return 1
+    fi
 
-# if [ "$problem" == "tsp" ]; then
-#     for num_cities in 10 25 50
-#     do
-#         python paper.py --problem tsp_$num_cities
-#     done
+    echo "=========================================="
+    echo "Running ${problem_base} on settings: ${settings[*]}"
+    echo "=========================================="
 
-#     # run the following in parallel using background jobs
-#     for method in Random SimulatedAnnealing HillClimbing
-#     do
-#         for num_cities in 10 25 50
-#         do
-#             python paper.py --problem tsp_$num_cities --method $method --baseline-max-time $baseline_max_time &
-#         done
-#     done
+    # Run experiments for each setting
+    for setting in "${settings[@]}"; do
+        local problem="${problem_base}_${setting}"
+        echo ""
+        echo "--- Processing ${problem} ---"
+        echo "Setting: ${setting}"
+        # Run MetaEase first and measure execution time
+        echo "Running MetaEase to determine baseline time..."
+        START_TIME=$(date +%s)
+        python paper.py --problem ${problem} --method MetaEase --base-save-dir ${base_save_dir}
+        END_TIME=$(date +%s)
+        META_EASE_TIME=$((END_TIME - START_TIME))
+        echo "MetaEase took ${META_EASE_TIME} seconds for ${problem} and ${setting}"
 
-#     # wait for all background jobs to complete
-#     wait
-# fi
+        # Run baseline methods with the same time limit
+        echo "Running baseline methods with ${META_EASE_TIME} seconds time limit..."
+        python paper.py --problem ${problem} --method HillClimbing --baseline-max-time ${META_EASE_TIME} --base-save-dir ${base_save_dir} &
+        python paper.py --problem ${problem} --method SimulatedAnnealing --baseline-max-time ${META_EASE_TIME} --base-save-dir ${base_save_dir} &
+        python paper.py --problem ${problem} --method Random --baseline-max-time ${META_EASE_TIME} --base-save-dir ${base_save_dir} &
+        python paper.py --problem ${problem} --method GradientSampleBased --baseline-max-time ${META_EASE_TIME} --base-save-dir ${base_save_dir} &
+        wait
 
-# elif [ "$problem" == "TE_DemandPinning" ]; then
-#     for topology in "abilene" "b4-teavar" "swan"
-#     do
-#         python paper.py --problem TE_DemandPinning_$topology
-#     done
+        echo "Completed ${problem}"
+    done
 
-#     # run the following in parallel using background jobs
-#     for method in Random SimulatedAnnealing HillClimbing
-#     do
-#         for topology in "abilene" "b4-teavar" "swan"
-#         do
-#             python paper.py --problem TE_DemandPinning_$topology --method $method --baseline-max-time $baseline_max_time &
-#         done
-#     done
+    # Generate experiment file and plots
+    echo ""
+    echo "--- Generating plots for ${problem_base} ---"
+    cd ../scripts
+    python generate_experiment_file.py --logs-dir ${base_save_dir} --output-name ${problem_base}
+    python plot_methods.py --experiment_file ${problem_base}.txt --output_dir plots/${problem_base}
+    cd ../src
 
-#     # wait for all background jobs to complete
-#     wait
-# fi
-# fi
+    echo "=========================================="
+    echo "Completed all experiments for ${problem_base}"
+    echo "=========================================="
+}
+
+# Example usage: Run TE_DemandPinning on multiple settings
+run_problem_on_settings "TE_DemandPinning" "swan" "abilene"

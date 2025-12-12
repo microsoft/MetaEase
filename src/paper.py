@@ -14,9 +14,7 @@ if __name__ == "__main__":
     # MetaEase
     parser.add_argument("--klee-task", type=str, default="inputs_scale_fixed_points", choices=["inputs_scale_fixed_points", "inputs"])
     parser.add_argument("--baseline-max-time", type=float, default=3600, help="Maximum time in seconds for Random, Simulated Annealing and Hill Climbing")
-    parser.add_argument("--baseline-repeat", type=int, default=10, help="Number of times to repeat the baseline method")
-    # Random
-    parser.add_argument("--num-random-samples", type=int, default=100, help="Number of random samples to generate for Random")
+    parser.add_argument("--baseline-repeat", type=int, default=1, help="Number of times to repeat the baseline method")
     # Simulated Annealing
     parser.add_argument("--num-iterations", type=int, default=100, help="Number of iterations for Simulated Annealing and Hill Climbing")
     parser.add_argument("--SA-initial-temperature", type=float, default=1.0, help="Initial temperature for Simulated Annealing")
@@ -40,7 +38,7 @@ if __name__ == "__main__":
         metaease_main(args)
     elif args.method == "Random":
         print("Running Random Sampling")
-        random_sampling_main(args, num_samples=args.num_random_samples, max_time=args.baseline_max_time)
+        random_sampling_main(args, max_time=args.baseline_max_time)
     elif args.method == "SimulatedAnnealing":
         print("Running Simulated Annealing")
         for _ in range(args.baseline_repeat):

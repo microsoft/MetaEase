@@ -57,11 +57,20 @@ class AsyncLogger:
 
         # Create handlers
         # File handler with rotation
+        # Ensure log file exists immediately (even if empty) so it's created even if process crashes early
+        # The directory is already created in __init__, but ensure the file exists
+        if not os.path.exists(self.log_file):
+            try:
+                with open(self.log_file, 'w') as f:
+                    f.write('')  # Create empty file
+            except (OSError, IOError):
+                pass  # If we can't create it, the handler will try later
+
         file_handler = logging.handlers.RotatingFileHandler(
             self.log_file,
             maxBytes=10*1024*1024,  # 10MB
             backupCount=5,
-            delay=True
+            delay=False  # Changed to False so file is opened immediately when handler is created
         )
         file_handler.setLevel(logging.DEBUG)
 
