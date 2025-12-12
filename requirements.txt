@@ -3,7 +3,7 @@ black==24.10.0
 click==8.1.7
 contourpy==1.3.0
 cycler==0.12.1
-fonttools==4.53.1
+fonttools==4.60.2
 gurobipy==12.0.0
 ijson==3.3.0
 immutabledict==4.2.0
