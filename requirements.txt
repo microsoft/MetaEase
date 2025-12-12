@@ -19,7 +19,7 @@ pandas==2.2.2
 pathspec==0.12.1
 pillow==10.4.0
 platformdirs==4.3.6
-protobuf==5.28.0
+protobuf==5.29.5
 psutil==7.0.0
 pyparsing==3.1.4
 python-dateutil==2.9.0.post0
