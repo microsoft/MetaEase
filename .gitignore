@@ -9,6 +9,8 @@ plots/*
 topologies/partition_log/*
 src/klee-*
 src/test.bc
+src/problems/DOTE/temp_dote_data*
+src/problems/DOTE/networking_envs/data/Abilene/models_ignore/*
 
 # Processing files
 *.txt
