@@ -170,3 +170,6 @@ Similar structure to Random, with method-specific result files containing the op
 - **Code Path**: Each heuristic execution follows a specific code path (determined by conditional branches). MetaEase tracks code paths to ensure path-aware gradient updates.
 
 - **KLEE Iterations**: MetaEase partitions variables into clusters and optimizes them sequentially. Each cluster optimization is called a "KLEE iteration" because KLEE is run to generate seeds for that cluster.
+
+# Running Paper Experiments
+To geterate the plots for the paper, you can run use the commands in `paper.sh`.

@@ -56,28 +56,54 @@ cd src
 echo "Running experiments..."
 # Traffic Engineering (TE) problem, small settings
 topologies=("swan" "abilene" "b4-teavar")
+
+## Data for Figure 7 and Figure 8
 run_problem_on_settings "TE_DemandPinning" "${topologies[@]}"
-run_problem_on_settings "TE_PoP" "${topologies[@]}"
-run_problem_on_settings "TE_LLM" "${topologies[@]}"
+
+## Data for Table 4
 run_problem_on_settings "TE_DOTE" "AbileneDOTE"
 
-# # Knapsack problem
-num_items=("20" "30" "40" "50")
-run_problem_on_settings "knapsack" "${num_items[@]}"
+## Data for Figure 9 and Table 5
+run_problem_on_settings "TE_PoP" "${topologies[@]}"
 
-# # Maximum Weight Matching (mwm) problem
-topologies=("swan" "abilene" "b4-teavar")
-run_problem_on_settings "mwm" "${topologies[@]}"
+## Data for Table 6
+for topology in "${topologies[@]}"; do
+    python paper.py --problem TE_LLM_${topology} --method MetaEase --base-save-dir ../logs_final_TE_LLM_${topology}
+done
 
-# IP--Optical Network Optimization: Arrow Heuristic
-run_problem_on_settings "arrow" "IBM" "B4"
 
 # Vector Bin Packing (vbp) problem, compared with MetaOpt (run separately)
+## Data for Table 7
 for setting in "10_1" "10_2" "15_1" "15_2" "20_1" "20_2"; do
     python paper.py --problem vbp_FFD_${setting} --method MetaEase --base-save-dir ../logs_final_vbp_FFD
 done
 
-# larger settings
+
+# # Knapsack problem
+## Data for Figure 10
+num_items=("20" "30" "40" "50")
+run_problem_on_settings "knapsack" "${num_items[@]}"
+
+
+# IP--Optical Network Optimization: Arrow Heuristic
+## Data for Figure 11
+run_problem_on_settings "arrow" "IBM" "B4"
+
+
+# Maximum Weight Matching (mwm) problem
+## Data for Figure 12
+topologies=("swan" "abilene" "b4-teavar")
+run_problem_on_settings "mwm" "${topologies[@]}"
+
+
+# Large Topologies
+## Data for Figure 8 and Table 3 (additional settings)
 run_problem_on_settings "TE_DemandPinning" "Cogentco" "Uninet2010"
-run_problem_on_settings "TE_PoP" "Cogentco" "Uninet2010"
+
+## Data for Table 5 (additional settings)
+for setting in "Cogentco" "Uninet2010"; do
+    python paper.py --problem TE_PoP_${setting} --method MetaEase --base-save-dir ../logs_final_TE_PoP_${setting}
+done
+
+## Data for Figure 12 (additional settings)
 run_problem_on_settings "mwm" "Cogentco" "Uninet2010"
