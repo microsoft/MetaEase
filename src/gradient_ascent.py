@@ -1,3 +1,23 @@
+"""
+Gradient Ascent with Gaussian Process Surrogate.
+
+This module implements the gradient-based optimization component of MetaEase.
+Since heuristics are arbitrary code (no analytic form), we use a Gaussian Process
+(GP) surrogate to estimate the heuristic function and compute gradients.
+
+Key components:
+1. fit_gaussian_process: Fits a GP to heuristic evaluations
+2. estimate_gradient_with_gp: Computes analytical GP gradient (closed-form)
+3. gradient_ascent: Performs gradient ascent with path-aware constraints
+
+The gradient of the gap is: ∇Gap = ∇Benchmark - ∇Heuristic
+- Benchmark gradient: From Lagrangian duality (computed in opt_utils.py)
+- Heuristic gradient: From GP surrogate (computed here)
+
+Path-aware updates ensure gradient steps stay within the same code path to avoid
+instability near non-differentiable boundaries (sorting, conditionals).
+"""
+
 import os
 import json
 import pickle
@@ -10,14 +30,15 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKernel
 
-DO_SCALING = True
+DO_SCALING = True  # Whether to scale inputs/outputs for GP (recommended)
 DEBUG = False
 RED = "\033[91m"
 RESET = "\033[0m"
-USE_DIRECT_DERIVATIVE = True
+USE_DIRECT_DERIVATIVE = True  # Use analytical GP gradient (faster, more accurate)
 
 # Function to flatten nested lists
 def flatten(individual):
+    """Flatten a nested list structure."""
     return [item for sublist in individual for item in sublist]
 
 
@@ -30,20 +51,48 @@ def flatten_dict(data):
 
 # Define the ConstantGP class globally
 class ConstantGP:
+    """
+    Fallback GP model for constant functions.
+    Used when all heuristic evaluations return the same value (degenerate case).
+    This avoids numerical issues in GP fitting.
+    """
     def __init__(self, constant_value):
         self.constant_value = constant_value
 
     def predict(self, X, return_std=False):
+        """Predict constant value with zero uncertainty."""
         return np.full((X.shape[0],), self.constant_value), np.zeros((X.shape[0],))
 
     def fit(self, X, y):
-        pass  # No fitting necessary since it's a constant model
+        """No fitting necessary since it's a constant model."""
+        pass
 
 
 def fit_gaussian_process(population, fitness_scores, keys_for_heuristic):
-    # Convert population to a 2D array
+    """
+    Fit a Gaussian Process surrogate to heuristic evaluations.
+    The GP models the heuristic function f(x) using observed evaluations.
+    This allows us to compute gradients without re-evaluating the heuristic
+    at every gradient step.
+
+    Args:
+        population: List of input samples (dictionaries)
+        fitness_scores: List of heuristic values for each sample
+        keys_for_heuristic: Which input variables to use for GP
+
+    Returns:
+        gp: Fitted GaussianProcessRegressor (or ConstantGP if degenerate)
+        scaler_x: Input scaler (for inverse transform)
+        scaler_y: Output scaler (for inverse transform)
+
+    Kernel: RBF (Radial Basis Function) with constant scaling and white noise
+    - RBF captures smoothness of heuristic function
+    - WhiteKernel models observation noise
+    """
+    # Convert population to a 2D array (samples x features)
     X = np.array([[individual[key] for key in keys_for_heuristic] for individual in population])
     if X.ndim == 3:
+        # Handle nested structure
         X = np.array([[individual[key][0] for key in keys_for_heuristic] for individual in population])
 
     # Validate input data
@@ -53,7 +102,7 @@ def fit_gaussian_process(population, fitness_scores, keys_for_heuristic):
 
     y = np.array(fitness_scores)
 
-    # Check for invalid values
+    # Check for invalid values (NaN, Inf)
     if np.any(np.isnan(y)) or np.any(np.isinf(y)):
         print("Warning: Invalid values in fitness scores")
         valid_indices = ~(np.isnan(y) | np.isinf(y))
@@ -65,6 +114,7 @@ def fit_gaussian_process(population, fitness_scores, keys_for_heuristic):
     # Ensure y is 2D for sklearn
     y = y.reshape(-1, 1)
 
+    # Standardize inputs and outputs for numerical stability
     scaler_x = StandardScaler()
     scaler_y = StandardScaler()
 
@@ -79,15 +129,19 @@ def fit_gaussian_process(population, fitness_scores, keys_for_heuristic):
             print(f"y sample: {y[:5]}")
             return ConstantGP(np.mean(y)), None, None
 
+    # Remove duplicate samples
     X, indices = np.unique(X, axis=0, return_index=True)
     y = y[indices]
 
-    # Check if all fitness scores are the same
+    # Check if all fitness scores are the same (degenerate case)
     if len(set(y.flatten())) == 1:
         constant_value = y.flatten()[0]
         return ConstantGP(constant_value), scaler_x, scaler_y
 
-    # Define kernel: a product of constant kernel and RBF kernel
+    # Define kernel: Constant * RBF + WhiteKernel
+    # - Constant kernel: scales the overall variance
+    # - RBF kernel: captures smoothness (squared exponential)
+    # - WhiteKernel: models observation noise
     kernel = C(1.0, (1e-2, 1e8)) * RBF(
         length_scale=1.0, length_scale_bounds=(1e-2, 1e6)
     ) + WhiteKernel(noise_level=1e-2, noise_level_bounds=(1e-5, 1e1))
@@ -95,9 +149,8 @@ def fit_gaussian_process(population, fitness_scores, keys_for_heuristic):
     # Fit the Gaussian Process model
     gp = GaussianProcessRegressor(
         kernel=kernel,
-        n_restarts_optimizer=25,  # Increased from 10 to give more chances for convergence
+        n_restarts_optimizer=25,  # Multiple restarts for better hyperparameter optimization
         alpha=1e-3,  # Small regularization for numerical stability
-        # normalize_y=True,  # Normalize target values
         random_state=42,  # For reproducibility
     )
 
@@ -173,12 +226,26 @@ def heuristic_function(
 
 def estimate_gradient_with_gp(gp, scaler_x, scaler_y, individual_array):
     """
-    Compute the analytical gradient of the GP prediction using the closed-form formula.
-    This is much more efficient and accurate than finite differences.
+    Compute the analytical gradient of the GP prediction using closed-form formula.
 
-    For a GP with RBF kernel, the gradient is:
-    ∇μ(x*) = K(x*, X) @ (K(X,X) + σ²I)^(-1) @ y * ∇k(x*, X)
-    where ∇k(x*, X) is the gradient of the kernel w.r.t. x*
+    This is much more efficient and accurate than finite differences. For a GP with
+    RBF kernel, the gradient of the mean prediction is:
+
+        ∇μ(x*) = Σ_i α_i * ∇k(x*, x_i)
+
+    where:
+        - α = (K(X,X) + σ²I)^(-1) @ y  (pre-computed during fitting)
+        - ∇k(x*, x_i) is the gradient of the RBF kernel w.r.t. x*
+        - K is the kernel matrix
+
+    Args:
+        gp: Fitted GaussianProcessRegressor
+        scaler_x: Input scaler (for transforming x*)
+        scaler_y: Output scaler (for scaling gradient back to original units)
+        individual_array: Point at which to compute gradient
+
+    Returns:
+        gradient: ∇μ(x*) in original input space
     """
     if isinstance(gp, ConstantGP):
         return np.zeros_like(individual_array)

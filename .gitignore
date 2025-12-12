@@ -18,3 +18,4 @@ src/problems/DOTE/networking_envs/data/Abilene/models_ignore/*
 *.jpg
 *.csv
 *.json
+*.pkl

@@ -1,3 +1,18 @@
+"""
+Optimization Utilities for MetaEase.
+
+This module contains core functions for gradient-based optimization:
+1. Gradient computation: Combines benchmark and heuristic gradients
+2. Sample generation: Creates samples around anchor points for GP fitting
+3. Path-aware updates: Ensures gradient steps stay within code paths
+
+The key insight is that the gap gradient is:
+    ∇Gap = ∇Benchmark - ∇Heuristic
+
+- Benchmark gradient: From Lagrangian duality (no re-solving needed)
+- Heuristic gradient: From Gaussian Process surrogate (fitted to evaluations)
+"""
+
 from common import *
 import json
 import math
@@ -5,18 +20,51 @@ import random
 import itertools
 
 ENABLE_PRINT = False
-GRANULARITY = 10000  # multiplied by numbers, the values will be integers
+GRANULARITY = 10000  # Multiplier for converting floats to integers (for numerical stability)
 SEED = 42
 np.random.seed(SEED)
 random.seed(SEED)
 
 def compute_heuristic_code_path(problem, input_demand_values):
+    """
+    Compute which code path the heuristic takes for given inputs.
+
+    Code paths represent equivalence classes: inputs that follow the same
+    execution path through the heuristic. Path-aware gradient updates ensure
+    we stay within the same path to avoid instability.
+
+    Args:
+        problem: Problem instance with heuristic implementation
+        input_demand_values: Input values (dictionary)
+
+    Returns:
+        (code_path_num, heuristic_value): Path identifier and heuristic result
+    """
     converted_input_values = problem.convert_input_dict_to_args(input_demand_values)
     heuristic_result = problem.compute_heuristic_value(converted_input_values)
     return (heuristic_result["code_path_num"], heuristic_result["heuristic_value"])
 
 def get_heuristic_and_optimal_values(problem, input_demand_values, only_relaxed=False):
-    """Get heuristic, optimal, and relaxed optimal values for any problem type."""
+    """
+    Get heuristic, optimal, and relaxed optimal values for any problem type.
+
+    This function computes:
+    - Heuristic value: Result from the heuristic implementation
+    - Optimal value: True optimal solution (may be expensive to compute)
+    - Relaxed optimal: Relaxed (continuous) version for gradient computation
+
+    The relaxed optimal is used for gradient computation via Lagrangian duality,
+    avoiding the need to re-solve the benchmark at every gradient step.
+
+    Args:
+        problem: Problem instance
+        input_demand_values: Input values (dictionary)
+        only_relaxed: If True, skip computing true optimal (faster)
+
+    Returns:
+        Tuple of (heuristic_value, code_path_num, optimal_value, optimal_all_vars,
+                  relaxed_optimal_value, relaxed_all_vars, heuristic_all_vars)
+    """
     converted_input_values = problem.convert_input_dict_to_args(input_demand_values)
     heuristic_value = problem.compute_heuristic_value(converted_input_values)
     if not only_relaxed:
@@ -62,7 +110,24 @@ def get_heuristic_values(problem, input_demand_values):
 
 
 def get_relaxed_optimal_gradient(problem, relaxed_all_vars):
-    """Get the optimal gradient for any problem type."""
+    """
+    Get the benchmark gradient using Lagrangian duality.
+
+    This is a key optimization: instead of re-solving the benchmark at every
+    gradient step (expensive), we use Lagrangian duality to compute gradients
+    directly from the relaxed solution. This avoids solving the optimization
+    problem repeatedly.
+
+    The gradient is computed as the derivative of the Lagrangian with respect
+    to input variables, evaluated at the relaxed optimal solution.
+
+    Args:
+        problem: Problem instance with benchmark solver
+        relaxed_all_vars: Relaxed optimal solution variables
+
+    Returns:
+        Dictionary mapping variable names to gradient values
+    """
     converted_input_values = problem.convert_input_dict_to_args(relaxed_all_vars)
     try:
         gradient = problem.compute_lagrangian_gradient(converted_input_values)
@@ -94,7 +159,27 @@ def get_relaxed_optimal_values(problem, input_demand_values):
 def generate_block_samples(
     anchor_point, block_length, num_samples, thresholds, assigned_fixed_keys=None, anchor_heu_code_path_num=None
 ):
-    """Generate random samples within a block around the anchor point."""
+    """
+    Generate random samples within a block around the anchor point.
+
+    These samples are used to fit the Gaussian Process surrogate. The block
+    is centered at the anchor point (current best input) and has size
+    block_length in each dimension. This local sampling strategy:
+    1. Focuses GP fitting on the region of interest
+    2. Ensures samples stay within the same code path (if anchor_heu_code_path_num provided)
+    3. Respects variable thresholds (min/max bounds)
+
+    Args:
+        anchor_point: Current best input (dictionary)
+        block_length: Size of sampling block in each dimension
+        num_samples: Number of samples to generate
+        thresholds: Dictionary of (min, max) bounds for each variable
+        assigned_fixed_keys: Variables to keep fixed (use anchor values)
+        anchor_heu_code_path_num: Code path to maintain (for path-aware sampling)
+
+    Returns:
+        List of sample dictionaries
+    """
     samples = []
     for _ in range(num_samples):
         sample = {}

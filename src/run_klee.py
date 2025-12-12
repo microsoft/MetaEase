@@ -18,11 +18,38 @@ import platform
 DISABLE_FILE_REMOVAL = False
 VBP_ITEM_USAGE = False #os.getenv("VBP_ITEM_USAGE", "True") == "True"
 print(f"VBP_ITEM_USAGE: {VBP_ITEM_USAGE}")
+
 class KleeRunner:
+    """
+    Wrapper for KLEE symbolic execution engine.
+
+    KLEE performs symbolic execution on heuristic C code to:
+    1. Explore distinct code paths (equivalence classes of inputs)
+    2. Generate path-representative seed inputs (one per code path)
+    3. Avoid redundant random restarts by finding diverse starting points
+
+    This is a key component of MetaEase: symbolic execution provides better
+    initialization than random sampling, leading to up to 44× larger gaps.
+    """
     def __init__(self, timeout_sec: int = 100):
+        """Initialize KLEE runner with timeout."""
         self.timeout_sec = timeout_sec
 
     def get_bitcode(self, c_filename: str) -> str:
+        """
+        Compile C program to LLVM bitcode for KLEE.
+
+        KLEE operates on LLVM bitcode, not source code. This method:
+        1. Compiles the heuristic C code to bitcode using clang
+        2. Handles platform-specific paths (macOS vs Linux)
+        3. Sets appropriate flags for symbolic execution
+
+        Args:
+            c_filename: Path to C source file
+
+        Returns:
+            Path to generated bitcode file
+        """
         # Compile the program to LLVM bitcode
         bitcode = "test.bc"
 
@@ -34,13 +61,13 @@ class KleeRunner:
             clang_path = "/opt/homebrew/Cellar/llvm@16/16.0.6_1/bin/clang"
             if not os.path.exists(clang_path):
                 raise Exception("LLVM clang not found. Please ensure LLVM 16 is installed via Homebrew.")
-            
+
             # Automatically detect KLEE include path
             klee_include_result = subprocess.run(["find", "/opt/homebrew", "-name", "klee.h", "-type", "f"], capture_output=True, text=True)
             if klee_include_result.returncode != 0 or not klee_include_result.stdout.strip():
                 raise Exception("KLEE headers not found. Please ensure KLEE is installed.")
             klee_include_path = os.path.dirname(os.path.dirname(klee_include_result.stdout.strip().split('\n')[0]))
-            
+
             compile_command = [
                 clang_path,
                 "-emit-llvm",
@@ -89,6 +116,23 @@ class KleeRunner:
             return bitcode
 
     def run_klee(self, c_filename: str) -> str:
+        """
+        Run KLEE symbolic execution on the compiled bitcode.
+
+        KLEE explores all feasible code paths by:
+        1. Making input variables symbolic (using klee_make_symbolic)
+        2. Following all branches that depend on symbolic values
+        3. Generating concrete test inputs for each path
+
+        This generates path-representative seeds that cover distinct
+        equivalence classes of inputs, avoiding redundant exploration.
+
+        Args:
+            c_filename: Path to C source file (will be compiled to bitcode)
+
+        Returns:
+            Path to KLEE output directory containing test cases
+        """
         bitcode = None
         try:
             # Clean up any existing KLEE output directories
@@ -96,23 +140,29 @@ class KleeRunner:
                 subprocess.run(["rm", "-rf", "klee-last"])
 
             bitcode = self.get_bitcode(c_filename)
-                        # Run KLEE on the bitcode file with deterministic search strategy
+
+            # Run KLEE on the bitcode file with deterministic search strategy
             # Automatically detect KLEE path
             klee_result = subprocess.run(["which", "klee"], capture_output=True, text=True)
             if klee_result.returncode != 0:
                 raise Exception("KLEE not found in PATH. Please ensure KLEE is installed and available.")
             klee_path = klee_result.stdout.strip()
 
+            # Configure KLEE command-line arguments
+            # Key settings:
+            # - random-path search: explores diverse code paths
+            # - timeout: limits execution time
+            # - external-calls: handles library functions
             klee_command = [
                 klee_path,
                 f"--max-time={self.timeout_sec}",
                 "--watchdog",
                 f"--max-solver-time={self.timeout_sec}",
-                "--max-memory=10000",  # Add memory limit
-                "--only-output-states-covering-new=false",  # Optimize state output
-                "--rng-initial-seed=1",
-                "--external-calls=all",
-                "--search=random-path",  # Use random path to explore more diverse states
+                "--max-memory=10000",  # Memory limit (MB)
+                "--only-output-states-covering-new=false",  # Output all states
+                "--rng-initial-seed=1",  # Deterministic seed
+                "--external-calls=all",  # Handle external function calls
+                "--search=random-path",  # Random path search for diversity
                 "--use-batching-search=false",
                 "--use-cex-cache=false",
                 "--output-source=false",

@@ -55,25 +55,29 @@ run_problem_on_settings() {
 cd src
 echo "Running experiments..."
 # Traffic Engineering (TE) problem, small settings
-# run_problem_on_settings "TE_DemandPinning" "swan" "abilene" "b4-teavar"
-# run_problem_on_settings "TE_PoP" "swan" "abilene" "b4-teavar"
-# run_problem_on_settings "TE_LLM" "swan" "abilene" "b4-teavar"
-# run_problem_on_settings "TE_DOTE" "AbileneDOTE"
+topologies=("swan" "abilene" "b4-teavar")
+run_problem_on_settings "TE_DemandPinning" "${topologies[@]}"
+run_problem_on_settings "TE_PoP" "${topologies[@]}"
+run_problem_on_settings "TE_LLM" "${topologies[@]}"
+run_problem_on_settings "TE_DOTE" "AbileneDOTE"
 
-# Vector Bin Packing (vbp) problem
-run_problem_on_settings "vbp_FFD" "8_1" # "10_1" "10_2" "15_1" "15_2" "20_1" "20_2"
+# # Knapsack problem
+num_items=("20" "30" "40" "50")
+run_problem_on_settings "knapsack" "${num_items[@]}"
 
-# Knapsack problem
-# run_problem_on_settings "knapsack" "20" "30" "40" "50"
-
-# Maximum Weight Matching (mwm) problem
-# run_problem_on_settings "mwm" "swan" "abilene" "b4-teavar"
+# # Maximum Weight Matching (mwm) problem
+topologies=("swan" "abilene" "b4-teavar")
+run_problem_on_settings "mwm" "${topologies[@]}"
 
 # IP--Optical Network Optimization: Arrow Heuristic
-# run_problem_on_settings "arrow" "IBM" "B4"
+run_problem_on_settings "arrow" "IBM" "B4"
 
+# Vector Bin Packing (vbp) problem, compared with MetaOpt (run separately)
+for setting in "10_1" "10_2" "15_1" "15_2" "20_1" "20_2"; do
+    python paper.py --problem vbp_FFD_${setting} --method MetaEase --base-save-dir ../logs_final_vbp_FFD
+done
 
 # larger settings
-# run_problem_on_settings "TE_DemandPinning" "Cogentco" "Uninet2010"
-# run_problem_on_settings "TE_PoP" "Cogentco" "Uninet2010"
-# run_problem_on_settings "mwm" "Cogentco" "Uninet2010"
+run_problem_on_settings "TE_DemandPinning" "Cogentco" "Uninet2010"
+run_problem_on_settings "TE_PoP" "Cogentco" "Uninet2010"
+run_problem_on_settings "mwm" "Cogentco" "Uninet2010"

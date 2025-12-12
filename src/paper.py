@@ -1,3 +1,19 @@
+"""
+Main entry point for MetaEase experiments.
+
+This module provides a command-line interface to run MetaEase and baseline methods
+for finding worst-case inputs of heuristics. MetaEase combines symbolic execution
+(KLEE) with gradient-based optimization to efficiently explore the input space and
+maximize the gap between heuristic and optimal solutions.
+
+Supported methods:
+- MetaEase: Main method using KLEE + gradient ascent
+- Random: Random sampling baseline
+- SimulatedAnnealing: Simulated annealing baseline
+- HillClimbing: Hill climbing baseline
+- GradientSampleBased: Gradient-based sampling baseline
+"""
+
 import argparse
 from metaease import metaease_main
 from random_sampling import random_sampling_main
@@ -14,7 +30,7 @@ if __name__ == "__main__":
     # MetaEase
     parser.add_argument("--klee-task", type=str, default="inputs_scale_fixed_points", choices=["inputs_scale_fixed_points", "inputs"])
     parser.add_argument("--baseline-max-time", type=float, default=3600, help="Maximum time in seconds for Random, Simulated Annealing and Hill Climbing")
-    parser.add_argument("--baseline-repeat", type=int, default=1, help="Number of times to repeat the baseline method")
+    parser.add_argument("--baseline-repeat", type=int, default=10, help="Number of times to repeat the baseline method")
     # Simulated Annealing
     parser.add_argument("--num-iterations", type=int, default=100, help="Number of iterations for Simulated Annealing and Hill Climbing")
     parser.add_argument("--SA-initial-temperature", type=float, default=1.0, help="Initial temperature for Simulated Annealing")
