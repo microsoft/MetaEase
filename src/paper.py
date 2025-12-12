@@ -1,5 +1,4 @@
 import argparse
-from common import LOG_DIR
 from metaease import metaease_main
 from random_sampling import random_sampling_main
 from simulated_annealing import simulated_annealing_main
@@ -10,7 +9,7 @@ import sys
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--problem", type=str, required=True)
-    parser.add_argument("--base-save-dir", type=str, default=LOG_DIR)
+    parser.add_argument("--base-save-dir", type=str, default="../logs_final")
     parser.add_argument("--method", type=str, default="MetaEase", choices=["MetaEase", "Random", "SimulatedAnnealing", "HillClimbing", "GradientSampleBased"])
     # MetaEase
     parser.add_argument("--klee-task", type=str, default="inputs_scale_fixed_points", choices=["inputs_scale_fixed_points", "inputs"])

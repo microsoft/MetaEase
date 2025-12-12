@@ -498,13 +498,9 @@ if __name__ == "__main__":
             _, _ = compare_graph_coloring_programs(
                 args.problem_config_path, args.save_name
             )
-    elif args.problem in ["tsp", "mwm", "task-scheduling", "knapsack", "TE", "vbp", "arrow" ]:
-        if args.problem == "tsp":
-            problem_class = TSPProblem(args.problem_config_path)
-        elif args.problem == "mwm":
+    elif args.problem in ["mwm", "knapsack", "TE", "vbp", "arrow" ]:
+        if args.problem == "mwm":
             problem_class = MWMProblem(args.problem_config_path)
-        elif args.problem == "task-scheduling":
-            problem_class = TaskSchedulingProblem(args.problem_config_path)
         elif args.problem == "knapsack":
             problem_class = KnapsackProblem(args.problem_config_path)
         elif args.problem == "TE":

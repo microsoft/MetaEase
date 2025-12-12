@@ -6,7 +6,7 @@ import os
 def get_clusters(
     problem_type: str, all_klee_vars: List[str], max_num: int, min_cluster_size: int = 4
 ) -> List[List[str]]:
-    if problem_type in ["TE", "tsp", "task_scheduling"]:
+    if problem_type in ["TE"]:
         return get_matrix_clusters(all_klee_vars, max_num, min_cluster_size)
     else:
         return get_vector_clusters(all_klee_vars, max_num, min_cluster_size)

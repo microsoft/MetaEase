@@ -58,15 +58,8 @@ PROBLEM_CONFIGS = {
         "heuristic_name": "DemandPinning",
         "top_k": 2,
     },
-    "tsp": {
-        "heuristic_name": "NearestNeighbor",
-        "max_value": 20,
-    },
     "mwm": {
         "heuristic_name": "Greedy",
-    },
-    "task-scheduling": {
-        "heuristic_name": "WorkStealing",
     },
 }
 
@@ -115,14 +108,7 @@ PARAMETERS = {
     "TE": {
         "min_value": 0.0,
     },
-    "tsp": {
-        "min_value": 0.1,
-        "max_value": PROBLEM_CONFIGS["tsp"]["max_value"],
-    },
     "mwm": {
-        "min_value": 0.0,
-    },
-    "task-scheduling": {
         "min_value": 0.0,
     },
     "arrow": {
@@ -140,12 +126,8 @@ def get_problem_instance(problem_type, config_path):
         return VBPProblem(config_path)
     elif problem_type == "knapsack":
         return KnapsackProblem(config_path)
-    elif problem_type == "tsp":
-        return TSPProblem(config_path)
     elif problem_type == "mwm":
         return MWMProblem(config_path)
-    elif problem_type == "task-scheduling":
-        return TaskSchedulingProblem(config_path)
     elif problem_type == "arrow":
         return ArrowProblem(config_path)
     else:
@@ -218,7 +200,7 @@ def get_parameters(problem_description):
         params.update(PARAMETERS[problem_type])
 
     # Set minimize_is_better flag
-    minimize_is_better = problem_type in ["vbp", "tsp", "task-scheduling"]
+    minimize_is_better = problem_type in ["vbp"]
     params["minimize_is_better"] = minimize_is_better
 
     return params

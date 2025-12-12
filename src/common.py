@@ -9,9 +9,6 @@ import ijson
 from pathlib import Path
 import random
 
-LOG_DIR = "../logs_final"
-os.makedirs(LOG_DIR, exist_ok=True)
-
 from gradient_ascent import (
     fit_gaussian_process,
     flatten_dict,
@@ -118,18 +115,6 @@ def get_problem_description(args) -> dict:
             problem_description["actual_gap_save_interval"] = 1000
             problem_description["relaxed_gap_save_interval"] = 10
             problem_description["save_and_plot_interval"] = 10
-    elif args.problem.startswith("tsp"):
-        num_cities = int(args.problem.split("_")[1])
-        problem_description = {
-            "problem_type": "tsp",
-            "num_cities": num_cities,
-            "max_distance": 20,
-            "block_length": 0.1,
-            "max_num_scalable_klee_inputs": 16,
-            "use_gaps_in_filtering": True,
-            "remove_zero_gap_inputs": True,
-            "max_num_klee_points_per_iteration": 3,
-        }
     elif args.problem.startswith("arrow"):
         topology_name = args.problem.split("_")[-1]
         problem_description = {
@@ -216,36 +201,6 @@ def get_problem_description(args) -> dict:
             "num_random_seed_samples": 30,
             "max_num_klee_points_per_iteration": 10,
         }
-    elif args.problem.startswith("task-scheduling"):
-        num_processors = int(args.problem.split("_")[1])
-        num_tasks = int(args.problem.split("_")[2])
-        max_switching_cost_k = float(args.problem.split("_")[3])
-        c = float(args.problem.split("_")[4]) # c: Let switching costs differ across tasks; scale heterogeneity of switching costs
-        # c= 1.0 means all switching costs are the same, it's the max/min of switching costs
-        min_switching_cost_k = max_switching_cost_k * c
-        print(f"max_switching_cost_k: {max_switching_cost_k}, c: {c}, min_switching_cost_k: {min_switching_cost_k}")
-
-        problem_description = {
-            "problem_type": "task-scheduling",
-            "heuristic_name": "work_stealing",
-            "is_minimize_better": True,
-            "num_processors": num_processors,
-            "num_tasks": num_tasks,
-            "max_time": 10,
-            "max_num_scalable_klee_inputs": 1000,
-            "use_gaps_in_filtering": True,
-            "remove_zero_gap_inputs": True,
-            "disable_guassian_process": True,
-            "early_stop": True,
-        }
-
-        # adding switching costs
-        for i in range(1, num_tasks + 1):
-            for j in range(i + 1, num_tasks + 1):
-                value = random.uniform(min_switching_cost_k, max_switching_cost_k)
-                problem_description[f"switching_cost_{f'{int(i)}'}_{f'{int(j)}'}]"] = value
-                problem_description[f"switching_cost_{f'{int(j)}'}_{f'{int(i)}'}]"] = value
-        problem_description["max_value"] = problem_description["max_time"]
     elif args.problem.startswith("mwm"):
         topology = args.problem.split("_")[-1]
         problem_description = {

@@ -73,51 +73,6 @@ def format_problem_name(problem):
         return "IBM"
     return problem.replace('_', ' ').title()
 
-def count_baseline_gap_computations(log_dir, method):
-    """Count gap computations for baseline methods (Random, SimulatedAnnealing, HillClimbing)."""
-    # Look for results.json files in the log directory
-    results_files = []
-
-    # Check for different possible results file names
-    possible_files = [
-        "random_sampling_results.json",
-        "simulated_annealing_results.json", 
-        "hill_climbing_results.json",
-        "results.json",
-        "sample_based_gradient_results.json",
-    ]
-    
-    for filename in possible_files:
-        file_path = os.path.join(log_dir, filename)
-        if os.path.exists(file_path):
-            results_files.append(file_path)
-    
-    total_gaps = 0
-    for results_file in results_files:
-        try:
-            with open(results_file, 'r') as f:
-                data = json.load(f)
-                if "gap_computations" in data:
-                    total_gaps += data["gap_computations"]
-                elif 'all_gaps' in data and isinstance(data['all_gaps'], list):
-                    total_gaps += len(data['all_gaps'])
-        except (json.JSONDecodeError, KeyError) as e:
-            print(f"Warning: Could not parse {results_file}: {e}")
-
-    # if no results files found, explore experiments.log
-    if len(results_files) == 0 and os.path.exists(os.path.join(log_dir, "experiment.log")):
-        # print(f"No results files found for {method} in {log_dir}, exploring experiment.log")
-        # parse Starting XXX with {num_samples} samples, parse Starting random sampling with {num_samples} samples
-        with open(os.path.join(log_dir, "experiment.log"), 'r') as f:
-            for line in f:
-                if "Starting random sampling" in line:
-                    total_gaps += int(line.split("with ")[1].split(" samples")[0])
-                elif "Starting HillClimbing" in line:
-                    total_gaps += int(line.split("with ")[1].split(" samples")[0])
-                elif "Starting SimulatedAnnealing" in line:
-                    total_gaps += int(line.split("with ")[1].split(" samples")[0])
-    return total_gaps
-
 def walk_metaease_gap_directory(log_dir):
     """Count gap computations for MetaEase by scanning all gap_list.json files."""
     total_gaps = 0
@@ -216,7 +171,6 @@ def walk_metaease_gap_directory(log_dir):
     log_data['is_experiment_finished'] = False
     # print(f"Total total time: {log_data['total_time']}")
     return {
-        "gap_computations": total_gaps,
         "log_data": log_data
     }
 
@@ -260,20 +214,6 @@ def get_log_data_for_one_experiment(log_dir, method):
         else:
             return None
 
-    # Count gap computations based on method type
-    if method == "MetaEase":
-        experiment_log_walk = walk_metaease_gap_directory(log_dir)
-        gap_computations = experiment_log_walk['gap_computations']
-        if log_data is None or (log_data is not None and not log_data['is_experiment_finished']) or os.path.exists(log_file + ".1"):
-            # If experiment is not finished or bad logging
-            log_data = experiment_log_walk["log_data"]
-        log_data['gap_computations'] = gap_computations
-    elif method == "MetaOpt":
-        gap_computations = 1
-        log_data['gap_computations'] = gap_computations
-    elif 'gap_computations' not in log_data or (log_data['gap_computations'] is None or log_data['gap_computations'] < 100):
-        gap_computations = count_baseline_gap_computations(log_dir, method)
-        log_data['gap_computations'] = gap_computations
     return log_data
 
 def get_problem_dict(experiment_file):
@@ -300,18 +240,6 @@ def get_problem_dict(experiment_file):
             if method not in problem_dict[problem]:
                 problem_dict[problem][method] = []
             problem_dict[problem][method].append(log_data)
-
-    # for any problem and method, if gap_computations is 0 for a case, set that tho the avg gap_computations of non-zero gap_computations
-    for problem in problem_dict:
-        for method in problem_dict[problem]:
-            non_zero_gap_computations = [log_data['gap_computations'] for log_data in problem_dict[problem][method] if log_data['gap_computations'] != 0]
-            if len(non_zero_gap_computations) > 0:
-                avg_gap_computations = np.mean(non_zero_gap_computations)
-            else:
-                continue
-            for idx, log_data in enumerate(problem_dict[problem][method]):
-                if log_data['gap_computations'] == 0:
-                    problem_dict[problem][method][idx]['gap_computations'] = avg_gap_computations
 
     # for any problem, make sure to cut values of gaps for all methods to the same length of time_from_start of MetaEase
     for problem in problem_dict:
@@ -347,8 +275,8 @@ def scale_problem_dict(problem_dict, experiment_name):
 
 def summarize_problem_dict(problem_dict):
     """Each problem and method could have multiple log data, we need to summarize them."""
-    # 'gap_computations', gaps, time_from_start, final_gap
-    # average final_gap and gap_computations
+    # gaps, time_from_start, final_gap
+    # average final_gap
     # average gaps and time_from_start curves for the same method and problem
     avg_problem_dict = {}
     for problem in problem_dict:
@@ -357,13 +285,6 @@ def summarize_problem_dict(problem_dict):
             curves = problem_dict[problem][method]
             # Initialize the averaged data structure
             avg_problem_dict[problem][method] = {}
-            # Average final_gap and gap_computations (scalar values)
-            gap_computations = [log_data['gap_computations'] for log_data in curves if log_data['gap_computations'] is not None]
-            if gap_computations:
-                avg_problem_dict[problem][method]['gap_computations'] = np.mean(gap_computations)
-            else:
-                avg_problem_dict[problem][method]['gap_computations'] = None
-
             final_gaps = [log_data['final_gap'] for log_data in curves if 'final_gap' in log_data and log_data['final_gap'] is not None]
             if final_gaps:
                 avg_problem_dict[problem][method]['final_gap'] = np.mean(final_gaps)
@@ -538,138 +459,6 @@ def plot_baselines(problem_dict, output_dir, problem_type, remove_metaopt=False)
                    facecolor='white',
                    edgecolor='none')
         plt.close()
-
-
-def plot_gap_computations(problem_dict, output_dir, problem_type, setting):
-    """Create a bar plot showing gap computation counts for each method and problem."""
-    # Collect data for plotting
-    problems = list(problem_dict.keys())
-    problems = sorted(problems, key=str.lower)
-    # drop MetaOpt from methods
-    methods = set()
-    for problem in problems:
-        methods.update(problem_dict[problem].keys())
-    methods = sorted(list(methods), key=lambda x: METHOD_ORDER.index(x) if x in METHOD_ORDER else len(METHOD_ORDER))
-    if "MetaOpt" in methods:
-        methods.remove("MetaOpt")
-    
-    # Create data matrix: problems x methods
-    gap_computations_data = {}
-    for method in methods:
-        gap_computations_data[method] = []
-        for problem in problems:
-            if method in problem_dict[problem]:
-                gap_computations_data[method].append(problem_dict[problem][method]['gap_computations'])
-            else:
-                gap_computations_data[method].append(0)
-    
-    # Create the plot
-    setup_plot_style()
-    fig, ax = plt.subplots(figsize=(8, 5))
-    
-    # Set up bar positions
-    x = np.arange(len(problems))
-    total_width = 0.8
-    bar_width = total_width / max(1, len(methods))
-    offset_start = - (total_width - bar_width) / 2.0
-    
-    # Plot bars for each method
-    for idx, method in enumerate(methods):
-        offsets = x + offset_start + idx * bar_width
-        bars = ax.bar(offsets, gap_computations_data[method], bar_width, 
-                     label=get_label_for_method(method), 
-                     color=get_color_for_method(method),
-                     hatch=METHOD_HATCHES[method],
-                     alpha=0.9,
-                     edgecolor='black',
-                     linewidth=0.6)
-        
-        # Add value labels on bars
-        for bar, value in zip(bars, gap_computations_data[method]):
-            if value > 0:  # Only show labels for non-zero values
-                height = bar.get_height()
-                ax.text(bar.get_x() + bar.get_width()/2., height,
-                       f'{value:.0f}', ha='center', va='bottom', fontsize=7)
-    
-    # Enhanced plot styling
-    ax.set_xlabel(setting, fontsize=14, fontweight='bold')
-    ax.set_ylabel('# Benchmark Calls', fontsize=14, fontweight='bold')
-    # ax.set_title('Gap Computation Counts by Method and Problem', fontsize=16, fontweight='bold', pad=20)
-    
-    # Set x-axis labels - center x-ticks with the group of bars
-    center_x = x + offset_start + (len(methods) - 1) * bar_width * 0.7
-    for index, problem in enumerate(problems):
-        if len(problem) >= 7:
-            center_x[index] = x[index] + offset_start + (len(methods) - 1) * bar_width
-    ax.set_xticks(center_x)
-    ax.set_xticklabels([format_problem_name(problem) for problem in problems], rotation=0, ha='right', fontsize=12)
-    
-    # Improve grid and background
-    ax.grid(False)  # Turn off all grids first
-    ax.grid(axis='y', alpha=0.4, linestyle='-', linewidth=0.5)
-    ax.set_facecolor('#f8f9fa')
-
-    # Enhanced legend - 2 columns at top outside
-    legend = ax.legend(loc='upper center',
-                      bbox_to_anchor=(0.5, 1.3),
-                      ncol=3,
-                      fontsize=12, 
-                      frameon=False)
-
-    # Improve axis formatting
-    ax.tick_params(axis='both', which='major', labelsize=11)
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
-    
-    # Set y-axis to log scale if there's a large range
-    max_value = max([max(values) for values in gap_computations_data.values() if values])
-    min_value = min([min([v for v in values if v > 0]) for values in gap_computations_data.values() if any(v > 0 for v in values)])
-    is_log_scale = max_value / min_value > 100
-    if is_log_scale:  # Use log scale if range is large
-        ax.set_yscale('log')
-        # make the y-label new line
-        ax.set_ylabel('# Benchmark Calls (Log)', fontsize=12)
-
-    xlim = ax.get_xlim()
-    ylim = ax.get_ylim()
-    
-    arrow_x = xlim[0] + 0.05 * (xlim[1] - xlim[0])
-    if is_log_scale:
-        arrow_y_start = ylim[0] + 0.3 * (ylim[1] - ylim[0])
-        arrow_y_end = ylim[0] + 0.05 * (ylim[1] - ylim[0])
-    else:
-        arrow_y_start = ylim[0] + 0.65 * (ylim[1] - ylim[0])
-        arrow_y_end = ylim[0] + 0.45 * (ylim[1] - ylim[0])
-    
-    # Draw the upward arrow
-    ax.annotate('', xy=(arrow_x, arrow_y_end), xytext=(arrow_x, arrow_y_start),
-                arrowprops=dict(arrowstyle='->', lw=1.5, color='black'))
-    
-    # Add rotated "Better" text next to the arrow
-    ax.text(arrow_x - 0.02 * (xlim[1] - xlim[0]), 
-            (arrow_y_start + arrow_y_end) / 2,
-            'Better', rotation=90, va='center', ha='right', 
-            fontsize=12, fontweight='bold')
-
-    # Add subtle background color
-    fig.patch.set_facecolor('white')
-    
-    # Adjust layout and save with high DPI
-    plt.tight_layout()
-    plt.savefig(f"{output_dir}/{problem_type}_gap_computations.pdf", 
-               dpi=300, 
-               bbox_inches='tight', 
-               facecolor='white',
-               edgecolor='none')
-    plt.close()
-    
-    # Print summary statistics
-    print(f"\nGap Computation Summary:")
-    print("-" * 50)
-    for method in methods:
-        total_computations = sum(gap_computations_data[method])
-        avg_computations = total_computations / len(problems)
-        print(f"{get_label_for_method(method):<20}: Total={total_computations:>8}, Average={avg_computations:>8.1f}")
 
 
 def plot_against_metaopt(problem_dict, output_dir, problem_type):
@@ -970,11 +759,6 @@ def main():
     os.makedirs(args.output_dir, exist_ok=True)
  
     problem_dict, setting = get_problem_dict(args.experiment_file)
-    if experiment_name == "TE_DemandPinning":
-        # read and add to problem_dict
-        with open("/data1/pantea/MetaEase/MetaOptimize/scripts/paper_logs/TE_DemandPinning_large_problem_dict.json", "r") as f:
-            problem_dict_large = json.load(f)
-        problem_dict.update(problem_dict_large)
 
     # print method and max gap for each problem
     for problem in problem_dict:
@@ -982,11 +766,7 @@ def main():
             print(f"{method}: {problem_dict[problem][method]['gaps'][-1]} at time {problem_dict[problem][method]['time_from_start'][-1]}")
     # sort the problem_dict keys
     problem_dict = dict(sorted(problem_dict.items(), key=lambda x: x[0]))
-    if experiment_name == "LLM":
-        problem_dict["Cogentco"]["SampleBasedGradient"]["gap_computations"] = 9
-        problem_dict["Uninet2010"]["SampleBasedGradient"]["gap_computations"] = 10
     plot_baselines(problem_dict, args.output_dir, problem_type=experiment_name, remove_metaopt=True)
-    plot_gap_computations(problem_dict, args.output_dir, problem_type=experiment_name, setting=setting)
     # plot_against_metaopt(problem_dict, args.output_dir, problem_type=experiment_name)
     plot_max_gaps_bar(problem_dict, args.output_dir, problem_type=experiment_name, setting=setting, remove_metaopt=True)
 

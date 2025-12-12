@@ -10,7 +10,7 @@ from utils import *
 from ortools.linear_solver import pywraplp
 from collections import defaultdict
 from .problem import Problem
-from common import LAMBDA_MAX_VALUE, LOG_DIR
+from common import LAMBDA_MAX_VALUE
 from ortools.linear_solver import pywraplp
 import os
 import numpy as np
@@ -1165,8 +1165,8 @@ class TEProblem(Problem):
         super().__init__(problem_config_path)
         topology_name = self.problem_config["topology"]
         self.max_num_paths = self.problem_config.get("max_num_paths", 4)
-        possible_demands_path = f"{LOG_DIR}/possible_demands_{topology_name}_{self.max_num_paths}paths.json"
-        all_paths_path = f"{LOG_DIR}/all_paths_{topology_name}_{self.max_num_paths}paths.json"
+        possible_demands_path = f"possible_demands_{topology_name}_{self.max_num_paths}paths.json"
+        all_paths_path = f"all_paths_{topology_name}_{self.max_num_paths}paths.json"
 
         loading_start = time.time()
         if os.path.exists(possible_demands_path) and os.path.exists(all_paths_path):

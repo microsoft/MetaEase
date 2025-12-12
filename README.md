@@ -77,9 +77,9 @@ List of all methods:
 
 ## Traffice Engineering (TE) plots
 ```bash
-python paper.py --problem TE_DemandPinning_abilene --method MetaEase
-python paper.py --problem TE_DemandPinning_abilene --method HillClimbing --baseline-max-time 600
-python paper.py --problem TE_DemandPinning_abilene --method SimulatedAnnealing --baseline-max-time 600
-python paper.py --problem TE_DemandPinning_abilene --method Random --baseline-max-time 600
-python paper.py --problem TE_DemandPinning_abilene --method GradientSampleBased --baseline-max-time 600
+python paper.py --problem TE_DemandPinning_abilene --method MetaEase --base-save-dir ../logs_final_TE
+python paper.py --problem TE_DemandPinning_abilene --method HillClimbing --baseline-max-time 600 --base-save-dir ../logs_final_TE
+python paper.py --problem TE_DemandPinning_abilene --method SimulatedAnnealing --baseline-max-time 600 --base-save-dir ../logs_final_TE
+python paper.py --problem TE_DemandPinning_abilene --method Random --baseline-max-time 600 --base-save-dir ../logs_final_TE
+python paper.py --problem TE_DemandPinning_abilene --method GradientSampleBased --baseline-max-time 600 --base-save-dir ../logs_final_TE
 ```

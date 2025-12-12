@@ -17,7 +17,6 @@ import sys
 import os
 # Add parent directory to path to import common
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from common import LOG_DIR
 import numpy as np
 import time
 import os
@@ -795,8 +794,8 @@ class ArrowProblem(Problem):
         # generate all tickets and nodes for the scenarios
         topology_path_without_extension = topology_path.split(".")[0].replace("/", "_")
         topology_path_with_extension = topology_path_without_extension.replace(".", "_") + f"_{self.num_scenarios}scenarios_{self.num_tickets}tickets_{self.num_random}random"
-        all_tickets_path = f"{LOG_DIR}/all_tickets_{topology_path_without_extension}.json"
-        all_tickets_and_nodes_for_scenarios_path = f"{LOG_DIR}/all_tickets_and_nodes_for_scenarios_{topology_path_with_extension}.pkl"
+        all_tickets_path = f"all_tickets_{topology_path_without_extension}.json"
+        all_tickets_and_nodes_for_scenarios_path = f"all_tickets_and_nodes_for_scenarios_{topology_path_with_extension}.pkl"
         if (
             os.path.exists(all_tickets_and_nodes_for_scenarios_path)
             and LOAD_TICKETS_FROM_FILE
