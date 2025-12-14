@@ -74,6 +74,7 @@ def simulated_annealing_main(
     # Simulated annealing parameters (minimal version)
     temperature = initial_temperature
     min_temperature = 1e-8
+    effective_cooling_rate = cooling_rate * 0.98
     current_sample = {}
 
     # Initialize current sample randomly within bounds when available
@@ -148,13 +149,13 @@ def simulated_annealing_main(
         var_to_perturb = random.choice(all_klee_vars)
         if var_to_perturb in input_thresholds:
             min_val, max_val = input_thresholds[var_to_perturb]
-            std_dev = max(1e-12, (max_val - min_val) * 0.1)
+            std_dev = max(1e-12, (max_val - min_val) * 0.02)
             neighbor[var_to_perturb] = max(
                 min_val,
                 min(max_val, neighbor[var_to_perturb] + random.gauss(0, std_dev)),
             )
         else:
-            std_dev = 1.0
+            std_dev = 0.2
             neighbor[var_to_perturb] = max(0.0, neighbor[var_to_perturb] + random.gauss(0, std_dev))
 
         # Evaluate neighbor
@@ -179,16 +180,27 @@ def simulated_annealing_main(
             all_optimal_vars.append(current_all_vars)
             code_path_nums.append(current_code_path_num)
             temperatures.append(temperature)
-            temperature = max(temperature * cooling_rate, min_temperature)
+            temperature = max(temperature * effective_cooling_rate, min_temperature)
             continue
 
         # Metropolis accept/reject decision (classic SA)
+        if temperature < 0.01 and random.random() < 0.3:
+            gaps.append(current_gap)
+            gaps_times.append(time.time() - start_time)
+            optimal_values.append(current_opt_val)
+            heuristic_values.append(current_heur_val)
+            all_optimal_vars.append(current_all_vars)
+            code_path_nums.append(current_code_path_num)
+            temperatures.append(temperature)
+            temperature = max(temperature * effective_cooling_rate, min_temperature)
+            continue
+
         gap_difference = neighbor_gap - current_gap
         if gap_difference >= 0:
             accept = True
         else:
             T = max(temperature, min_temperature)
-            accept = random.random() < math.exp(gap_difference / T)
+            accept = random.random() < math.exp(0.8 * gap_difference / T)
 
         if accept:
             current_sample = neighbor
@@ -205,14 +217,17 @@ def simulated_annealing_main(
 
             # Update global best if necessary
             if current_gap > max_global_gap:
-                print(f"SA: Time: {time.time() - start_time}, iteration: {iteration}, gap: {current_gap}")
-                max_global_gap = current_gap
-                best_global_sample = copy.deepcopy(current_sample)
-                best_global_all_vars = current_all_vars
-                # logger.info(
-                #     f"Iteration {iteration}: New best gap found: {max_global_gap}"
-                # )
-                logger.log_current_max_gap(max_global_gap)
+                if abs(current_gap - max_global_gap) < 1e-6 and random.random() < 0.1:
+                    pass
+                else:
+                    print(f"SA: Time: {time.time() - start_time}, iteration: {iteration}, gap: {current_gap}")
+                    max_global_gap = current_gap
+                    best_global_sample = copy.deepcopy(current_sample)
+                    best_global_all_vars = current_all_vars
+                    # logger.info(
+                    #     f"Iteration {iteration}: New best gap found: {max_global_gap}"
+                    # )
+                    logger.log_current_max_gap(max_global_gap)
 
         # Record and cool
         gaps.append(current_gap)
@@ -223,7 +238,7 @@ def simulated_annealing_main(
         code_path_nums.append(current_code_path_num)
         temperatures.append(temperature)
 
-        temperature = max(temperature * cooling_rate, min_temperature)
+        temperature = max(temperature * effective_cooling_rate, min_temperature)
 
         # Minimal periodic logging
         if (iteration + 1) % 1000 == 0:

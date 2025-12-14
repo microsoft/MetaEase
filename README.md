@@ -171,5 +171,82 @@ Similar structure to Random, with method-specific result files containing the op
 
 - **KLEE Iterations**: MetaEase partitions variables into clusters and optimizes them sequentially. Each cluster optimization is called a "KLEE iteration" because KLEE is run to generate seeds for that cluster.
 
-# Running Paper Experiments
-To geterate the plots for the paper, you can run use the commands in `paper.sh`.
+## Running Subset of Paper Experiments
+
+If you only want to run a subset of the experiments (useful for quick testing or when you have limited time/resources), you can use the `paper_subset.sh` script. This script runs a smaller selection of experiments that still demonstrate MetaEase's capabilities across different problem types.
+
+```bash
+bash paper_subset.sh
+```
+
+### What Gets Executed in the Subset
+
+The subset script runs the following experiments:
+
+- **TE_DemandPinning** (on swan, abilene only)
+  - Generates data for **Figure 7** and **Figure 8** (partial)
+- **TE_DOTE** (on AbileneDOTE)
+  - Generates data for **Table 4**
+- **TE_PoP** (on swan only)
+  - Generates data for **Figure 9** and **Table 5** (partial)
+- **TE_LLM** (on swan, abilene, b4-teavar)
+  - Generates data for **Table 6**
+- **mwm** (on swan, abilene, b4-teavar)
+  - Generates data for **Figure 12** (partial)
+
+### Differences from Full Script
+
+- **Fewer topologies**: Only runs on smaller/medium-sized topologies (excludes Cogentco and Uninet2010)
+- **Fewer problem types**: Excludes Vector Bin Packing, Knapsack, and Arrow heuristic experiments
+- **Sequential baseline execution**: Baseline methods run one at a time (not in parallel), which is slower but uses less system resources
+- **Faster execution**: Typically completes in a fraction of the time compared to the full script
+
+### When to Use
+
+Use `paper_subset.sh` when you want to:
+- Quickly verify the codebase works correctly
+- Test on a limited hardware setup
+- Generate a subset of the paper's figures/tables
+- Understand the workflow without running the full experiment suite
+
+For complete paper reproduction, use `paper.sh` instead.
+
+# Running All Paper Experiments
+
+The `paper.sh` script automates running all experiments needed to reproduce the paper's results. It systematically runs MetaEase and baseline methods across all problem types and configurations, then generates the plots and tables used in the paper.
+
+```bash
+bash paper.sh
+```
+
+**Note**: This script will run all experiments, which may take a significant amount of time (potentially days depending on your hardware). The script runs baseline methods in parallel to speed up execution.
+
+### What Gets Executed
+
+The script runs experiments for the following problems and generates data for specific paper figures/tables:
+
+- **TE_DemandPinning** (on swan, abilene, b4-teavar, Cogentco, Uninet2010)
+  - Generates data for **Figure 7**, **Figure 8**, and **Table 3**
+- **TE_DOTE** (on AbileneDOTE)
+  - Generates data for **Table 4**
+- **TE_PoP** (on swan, abilene, b4-teavar, Cogentco, Uninet2010)
+  - Generates data for **Figure 9** and **Table 5**
+- **TE_LLM** (on swan, abilene, b4-teavar)
+  - Generates data for **Table 6**
+- **vbp_FFD** (on settings: 10_1, 10_2, 15_1, 15_2, 20_1, 20_2)
+  - Generates data for **Table 7**
+- **knapsack** (on 20, 30, 40, 50 items)
+  - Generates data for **Figure 10**
+- **arrow** (on IBM, B4)
+  - Generates data for **Figure 11**
+- **mwm** (on swan, abilene, b4-teavar, Cogentco, Uninet2010)
+  - Generates data for **Figure 12**
+
+### Differences from Subset Script
+
+- **All topologies**: Includes large topologies (Cogentco, Uninet2010) in addition to smaller ones
+- **All problem types**: Includes Vector Bin Packing, Knapsack, and Arrow heuristic experiments
+- **Parallel baseline execution**: Baseline methods run in parallel (4 processes) to reduce total time
+- **Complete results**: Generates all figures and tables from the paper
+
+Results are saved in `../logs_final_<PROBLEM_TYPE>/` directories, and plots are automatically generated in `../plots/<PROBLEM_TYPE>/`.
