@@ -250,3 +250,70 @@ The script runs experiments for the following problems and generates data for sp
 - **Complete results**: Generates all figures and tables from the paper
 
 Results are saved in `../logs_final_<PROBLEM_TYPE>/` directories, and plots are automatically generated in `../plots/<PROBLEM_TYPE>/`.
+
+# Ablation Studies
+
+This artifact includes a dedicated script to reproduce ablations studies from Section 6 of the paper.
+
+- **Script location**: `src/ablation_DemandPinning.py`
+- **Purpose**: runs a sequence of ablation experiments by varying:
+  - seed generation (KLEE vs Random vs LLM)
+  - gradient configuration (GP surrogate vs direct / sample-based gradients)
+  - number of KLEE inputs (projected dimension \(K\))
+
+### Running the ablation experiments
+
+From the repository root:
+
+```bash
+cd src
+python ablation_DemandPinning.py
+```
+
+The script will:
+
+- sequentially run all configured ablations in `ablation_DemandPinning.py`
+- write results into directories under `../ablation_DemandPinning/`
+- incrementally update a timing summary JSON: `ablation_DemandPinning_timing_table.json`
+
+If you only want to run a **single** ablation, you can comment out the other ablation blocks and keep only the one whose `ablation_name` you are interested in (e.g., `"Klee_with_GP"`, `"Random_with_GP"`, `"LLM_with_GP"`, `"varying_klee_inputs_with_no_gradient_ascent"`, etc.).
+
+### Plotting ablation results
+
+The plotting helper for ablations is `scripts/plot_ablation.py`. It can generate timing and gap-comparison plots similar to those in the paper.
+
+1. **Edit the paths**  
+   - `plot_ablation.py` currently contains **hard-coded absolute paths** in the `ablation_dirs` dictionaries (e.g., under the `Problem == "Seed"`, `"Gradient"`, or `"Parameter_K"` branches).  
+   - Change these directory strings so they point to your local `ablation_DemandPinning` output directory, for example:
+     - replace paths like `/home/ubuntu/MetaEase/MetaOptimize/ablation_DemandPinning/...`
+     - with paths like `/data1/pantea/MetaEaseArtifact/MetaEase_MSR/ablation_DemandPinning/...` (or whatever path you used).
+
+2. **Choose which ablation family to plot**  
+   At the top of `scripts/plot_ablation.py`, set:
+
+   ```python
+   Problem = "Seed"         # for seed-generation ablations (LLM vs Random vs KLEE)
+   # or
+   Problem = "Gradient"     # for gradient-style ablations (GP vs direct vs sample-based)
+   # or
+   Problem = "Parameter_K"  # for varying number of KLEE inputs K
+   # or
+   Problem = "BlockLenght"  # for PoP block-length ablations (if desired)
+   ```
+
+3. **Run the plotting script**
+
+   From the repository root:
+
+   ```bash
+   cd scripts
+   python plot_ablation.py
+   ```
+
+   This will parse the ablation logs in the directories you configured and produce PDF plots (e.g., `ablation_by_topology.pdf`, `timings_by_topology.pdf`, `max_gap_per_ablation.pdf`) in a folder named:
+
+   ```text
+   ablation_plots_<Problem>/
+   ```
+
+   For example, if `Problem = "Seed"`, the plots will be under `ablation_plots_Seed/`.

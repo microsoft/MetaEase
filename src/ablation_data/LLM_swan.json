@@ -1,0 +1,117 @@
+{
+  "demand_sample_0_1": {
+    "demand_0_7": 10, "demand_2_7": 10, "demand_4_7": 10,
+    "demand_1_7": 200, "demand_3_7": 200, "demand_5_7": 200
+  },
+  "demand_sample_1_1": {
+    "demand_0_4": 10, "demand_3_4": 10, "demand_5_4": 10, "demand_7_4": 10,
+    "demand_1_4": 200, "demand_2_4": 200, "demand_6_4": 200
+  },
+  "demand_sample_2_1": {
+    "demand_0_5": 10, "demand_3_5": 10, "demand_4_5": 10,
+    "demand_1_5": 200, "demand_2_5": 200, "demand_6_5": 200
+  },
+  "demand_sample_3_1": {
+    "demand_0_6": 10, "demand_3_6": 10, "demand_4_6": 10,
+    "demand_1_6": 200, "demand_2_6": 200, "demand_7_6": 200
+  },
+  "demand_sample_4_1": {
+    "demand_0_3": 10, "demand_1_3": 10, "demand_2_3": 10, "demand_4_3": 10, "demand_5_3": 10, "demand_6_3": 10,
+    "demand_0_6": 200, "demand_1_6": 200, "demand_3_6": 200
+  },
+  "demand_sample_5_1": {
+    "demand_0_1": 10, "demand_1_2": 10, "demand_2_3": 10, "demand_3_4": 10, "demand_4_5": 10, "demand_5_4": 10,
+    "demand_0_3": 200, "demand_2_4": 200, "demand_5_7": 200
+  },
+  "demand_sample_6_1": {
+    "demand_5_0": 10, "demand_5_1": 10, "demand_5_2": 10, "demand_5_4": 10,
+    "demand_5_7": 200, "demand_5_6": 200, "demand_5_3": 200
+  },
+  "demand_sample_7_1": {
+    "demand_7_5": 10, "demand_7_6": 10, "demand_1_7": 10, "demand_2_7": 10,
+    "demand_0_7": 200, "demand_3_7": 200, "demand_5_7": 200
+  },
+  "demand_sample_8_1": {
+    "demand_2_4": 10, "demand_1_4": 10, "demand_3_4": 10,
+    "demand_2_5": 200, "demand_1_5": 200, "demand_3_5": 200
+  },
+  "demand_sample_9_1": {
+    "demand_0_6": 10, "demand_1_6": 10, "demand_2_6": 10,
+    "demand_3_6": 200, "demand_4_6": 200, "demand_5_6": 200
+  },
+  "demand_sample_0": {
+    "demand_3_5": 40,
+    "demand_2_5": 40,
+    "demand_4_5": 40,
+    "demand_0_5": 40,
+    "demand_1_5": 40,
+    "demand_6_5": 40
+  },
+  "demand_sample_1": {
+    "demand_7_6": 35,
+    "demand_7_5": 35,
+    "demand_7_4": 35,
+    "demand_7_3": 35,
+    "demand_7_2": 35,
+    "demand_7_1": 35
+  },
+  "demand_sample_2": {
+    "demand_5_7": 40,
+    "demand_2_7": 40,
+    "demand_3_7": 40,
+    "demand_4_7": 40,
+    "demand_0_7": 40,
+    "demand_1_7": 40
+  },
+  "demand_sample_3": {
+    "demand_3_4": 40,
+    "demand_2_4": 40,
+    "demand_1_4": 40,
+    "demand_0_4": 40,
+    "demand_5_4": 40,
+    "demand_7_4": 40
+  },
+  "demand_sample_4": {
+    "demand_2_3": 40,
+    "demand_1_3": 40,
+    "demand_0_3": 40,
+    "demand_4_3": 40,
+    "demand_5_3": 40,
+    "demand_6_3": 40
+  },
+  "demand_sample_5": {
+    "demand_0_1": 50,
+    "demand_0_3": 50,
+    "demand_1_2": 50,
+    "demand_2_3": 50
+  },
+  "demand_sample_6": {
+    "demand_6_4": 40,
+    "demand_6_5": 40,
+    "demand_6_7": 40,
+    "demand_6_3": 40,
+    "demand_6_2": 40,
+    "demand_6_1": 40
+  },
+  "demand_sample_7": {
+    "demand_5_7": 50,
+    "demand_5_3": 40,
+    "demand_5_4": 40,
+    "demand_5_2": 40,
+    "demand_5_1": 40,
+    "demand_5_0": 40
+  },
+  "demand_sample_8": {
+    "demand_4_6": 40,
+    "demand_3_6": 40,
+    "demand_2_6": 40,
+    "demand_1_6": 40,
+    "demand_0_6": 40
+  },
+  "demand_sample_9": {
+    "demand_1_2": 50,
+    "demand_2_4": 50,
+    "demand_3_5": 50,
+    "demand_4_6": 50
+  }
+}
