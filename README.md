@@ -27,9 +27,7 @@ MetaEase_MSR/
 │   │   ├── programs_max_weighted_matching.py  # MWM problem implementations
 │   │   ├── programs_arrow.py     # Arrow heuristic (IP-Optical) implementations
 │   │   ├── arrow_utils.py        # Utilities for Arrow problem
-│   │   └── DOTE/                 # DOTE (Deep Optimization for Traffic Engineering) submodule
-│   │       ├── dote.py           # DOTE-specific implementations
-│   │       └── networking_envs/  # Network environment and RL components
+│   │   └── DOTE/                 # DOTE (Deep Optimization for Traffic Engineering) problem implementation
 │   │
 │   ├── gradient_ascent.py        # Gradient ascent optimization (MetaEase)
 │   ├── hill_climbing.py          # Hill climbing baseline
@@ -55,13 +53,6 @@ MetaEase_MSR/
 │   └── log_parser.py             # Log parsing utilities
 │
 ├── topologies/                   # Network topology data files
-│   ├── abilene.json              # Abilene network topology
-│   ├── b4-teavar.json            # B4 network topology
-│   ├── swan.json                 # SWAN network topology
-│   ├── Cogentco.json             # Cogentco network topology
-│   ├── Uninet2010.json           # Uninet2010 network topology
-│   ├── AbileneDOTE.json          # Abilene topology for DOTE
-│   └── arrow_*.txt               # Arrow optical network topologies
 │
 ├── paper.sh                      # Script to run all paper experiments from section 5 of the paper
 ├── paper_subset.sh               # Script to run subset of experiments from section 5 of the paper
