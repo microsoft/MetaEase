@@ -26,7 +26,6 @@ MetaEase_MSR/
 │   │   ├── programs_knapsack.py  # Knapsack problem implementations
 │   │   ├── programs_max_weighted_matching.py  # MWM problem implementations
 │   │   ├── programs_arrow.py     # Arrow heuristic (IP-Optical) implementations
-│   │   ├── arrow_utils.py        # Utilities for Arrow problem
 │   │   └── DOTE/                 # DOTE (Deep Optimization for Traffic Engineering) problem implementation
 │   │
 │   ├── gradient_ascent.py        # Gradient ascent optimization (MetaEase)
@@ -41,7 +40,6 @@ MetaEase_MSR/
 │   ├── clustering_utils.py       # Variable clustering/partitioning utilities
 │   ├── analysis_utils.py         # Analysis and result processing utilities
 │   ├── utils.py                  # General utility functions
-│   │
 │   └── ablation_DemandPinning.py # Ablation study script for DemandPinning
 │
 ├── scripts/                      # Analysis and visualization scripts
