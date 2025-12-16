@@ -73,7 +73,10 @@ def optimal_vbp(items: List[Item], bin_size: float, relaxed: bool = False):
         )
         for item in items
     ]
+    # TODO: how much is the runtime of SCIP a problem for the runtime for VBP? Gurobi is better optimized for mixed integer problems and runs faster.
+    # It may be good to have a default of gurobi for mixed integer problems instead of ORTools.
 
+    # TODO: for a cleaner implementation, it may be good to have a separate class for the optimal implementation and modularize it more. Right now this is a giant function blurb.
     if ENABLE_PRINT:
         print(f"Scaled bin size: {scaled_bin_size}")
         print(f"Scaled items: {[str(item) for item in scaled_items]}")
@@ -148,7 +151,7 @@ def optimal_vbp(items: List[Item], bin_size: float, relaxed: bool = False):
     status = solver.Solve()
     if ENABLE_PRINT:
         print(f"Solver status: {status}")
-
+    # TODO: Separate solution parsing into a different function? Again seems like this one function is doing way too much, break it up into smaller pieces for better understanding and maybe wrap in a class to encapsulate everything that is related to the optimal encoding.
     if status == pywraplp.Solver.OPTIMAL:
         if relaxed:
             # Store variable values
@@ -314,7 +317,11 @@ def first_fit_decreasing(items: List[Item], bin_size: float):
     items.sort(key=lambda x: x.get_dimension(0), reverse=True)
     return first_fit(items, bin_size)
 
-
+# TODO: this needs to have in the comment a discussion of how we are doing this given that the problem is discrete and the lagrangian is not differentiable.
+# This reminds me that when we are writing how a user adds new problems we also need to give guidance on how to handle discrete objectives/lagrangians.
+# TODO: another comment that also applies to programs_TE, is that your only computing the lagrangian for the optimal here right? or are you also computing the gradient for the gaussian process?
+# If the former, change your function name to reflect that.
+# TODO: since you are hardcoding gradients it would be good to put the equation for each problem of the gradient as a comment.
 def get_vbp_lagrangian_gradient(
     items: List[Item], bin_size: float, input_values: Dict[str, float]
 ) -> Dict[str, float]:
@@ -432,7 +439,9 @@ def get_vbp_lagrangian_gradient(
             gradient_values[key] = -gradient_values[key]
     return gradient_values
 
-
+# TODO: can use a comment to describe when it is used. It doesn't look to me like you use this to compute the gradient of the lagrangian since you are hardcoding that, so would be good for a user to know why you need it.
+# TODO: I wonder if as part of cleanup you want to build either a clean interface to the optimal's lagrangian and its gradient. Specifically so that in the MeteEase code you can always call the same function. There are two ways to do this, one is through call backs (which i am assuming is what your currently doing). The problem
+# with callbacks is that it doesn't force the user to specify the input, the other option is something similar to C# interfaces where you make sure the user has to define certain functions for registering a problem. The latter may be a cleaner way.
 def get_vbp_lagrangian(items, bin_size, input_values, give_relaxed_gap=False):
     lagrange = 0
     constraints = {}
@@ -532,7 +541,7 @@ def get_bin_packing_common_header(num_items, bin_capacity=100, num_dimensions=1)
 
     return common_header
 
-
+# TODO: the "all_klee_var_names" requirements for registering a heuristic are a bit concerning to me, as in MetaEase is not as "touch-free as we claim it to be." In our meeting lets go through all the requirements when someone wants to register a heuristic/problem and see if there are ways we can address these a bit better.
 class VBPProblem(Problem):
     def __init__(self, problem_config_path):
         super().__init__(problem_config_path)
@@ -545,7 +554,7 @@ class VBPProblem(Problem):
         for i in range(self.num_items):
             for j in range(self.num_dimensions):
                 self.all_klee_var_names.append(f"demand_item_{i}_dim_{j}")
-
+    # TODO: what are thresholds used for and what are they in the bin packing context?
     def get_thresholds(self, relaxed_all_vars):
         thresholds = {key: (0, self.bin_size) for key in self.all_klee_var_names}
         for key in relaxed_all_vars.keys():
@@ -568,7 +577,7 @@ class VBPProblem(Problem):
                 if self.bin_size < sum_demand:
                     return False
         return True
-
+    # TODO: expand this function's documentation to describe when and where it should be used.
     def get_item_sizes_for_bins(self, num_items, num_bins, random_seed=None):
         """Generate item sizes that will perfectly fill num_bins bins.
         Each bin will be filled exactly to capacity by splitting items."""
@@ -656,14 +665,14 @@ class VBPProblem(Problem):
 
         print(f"Generated {len(result)} unique permutations")
         return result
-
+    # TODO: this function needs documentation as to when and where it should be used.
     def get_optimal_value_based_on_combination(self, combination):
         bin_ids = set()
         for key, value in combination.items():
             if "aux_placement_item" in key and int(value) == 1:
                 bin_ids.add(int(key.split("_")[5]))
         return len(bin_ids)
-
+    # TODO: this function needs documentation as to when and where it should be used.
     def get_all_binary_combinations(self):
         all_combinations = []
         num_items = self.num_items
@@ -960,7 +969,7 @@ class VBPProblem(Problem):
         """
         # print(program)
         return {"program": program, "fixed_points": fixed_points}
-
+  # TODO: delete commented codes.
     def get_decision_to_input_map(self, all_vars):
         # Create a mapping of decision variables to their corresponding input variables
         decision_to_input_map = {}

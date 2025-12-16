@@ -19,7 +19,12 @@ import re
 import shutil
 import time
 import random
-
+# TODO: many parameters are the same across problem types, should have defaults and only override what is different.
+# TODO: rename get_heuristic_program to get_heuristic_C_program. and explain in a comment why the existance of these functions is necessary.
+# TODO: there are a bunch of duplicate imports in the code.
+# TODO: relative paths you have strewn about everywhere are a bit risky, better to fix with respect to base directory of MetaEase.
+# TODO: remove all the print statements you had added for debugging/remove all the comments of that too.
+# TODO: line 176-181 -- you can cache the edge to path mapping once to avoid recommputing it often.
 ENABLE_PRINT = False
 DISABLE_CUSTOMIZATION = False
 
