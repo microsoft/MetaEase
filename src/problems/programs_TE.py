@@ -23,6 +23,7 @@ import random
 ENABLE_PRINT = False
 DISABLE_CUSTOMIZATION = False
 
+# TODO: put a comment as to what this function is doing and what its inputs are and where it is used.
 def find_all_paths(problem_config, source, destination, max_num_paths=float("inf")):
     # Build adjacency list from the graph dictionary
     adjacency_list = defaultdict(list)
@@ -63,7 +64,7 @@ def get_min_capacity_on_path(path, edges):
         min_capacity = min(min_capacity, edges[edge])
     return min_capacity
 
-
+# TODO: describe the function, what it does and how it is used and where.
 def find_possible_demands(problem_config):
     import concurrent.futures
     import os
@@ -83,6 +84,8 @@ def find_possible_demands(problem_config):
         return (pair, paths)
 
     max_workers = min(32, int(os.cpu_count()* 0.8))
+    # TODO: such hard coded parameters either should be part of the parameter settings for the function
+    # OR they should be set somewhere in a master file. Strewn about configs make it hard to track.
     batch_size = 100  # You can adjust this batch size as needed
     results = []
     for i in range(0, len(pairs), batch_size):
@@ -103,7 +106,7 @@ def find_possible_demands(problem_config):
         print(f"\033[91mTime taken: {end_time - start_time} seconds to get all paths\033[0m")
     return possible_demands, all_paths
 
-
+# TODO: can use comments throughout it for what each constraint is encoding.
 def optimal_TE(num_nodes, edges, demands, possible_demands=None, given_all_paths=None):
     # Create the solver
     solver = pywraplp.Solver.CreateSolver("GLOP")
@@ -226,6 +229,7 @@ def optimal_TE(num_nodes, edges, demands, possible_demands=None, given_all_paths
         "all_vars": all_vars,
     }
 
+# TODO: can use a comment as to what this function is doing and how/where it should be used.
 def DOTE_wrapper(topology_name, demands):
     # remove DOTE from topology_name
     topology_name = topology_name.replace("DOTE", "")
@@ -245,6 +249,7 @@ def DOTE_wrapper(topology_name, demands):
             demand_matrix[from_node * num_nodes + to_node] = demand_value
 
     # Create the flattened vector without diagonal elements (as DOTE expects)
+    # TODO: would be good to explain a bit more what this means.
     flattened_demands = []
     for i in range(num_nodes):
         for j in range(num_nodes):
@@ -409,6 +414,7 @@ def DOTE_C_wrapper(topology_name, demands):
     total_served_flow = 0.0
     
     # Create a simple capacity matrix (assuming full mesh topology)
+    # TODO: what if the user inputs a topology with a given capacity?
     capacity_matrix = {}
     for i in range(num_nodes):
         for j in range(num_nodes):
@@ -814,7 +820,9 @@ def pop_TE(
         "all_vars": final_all_vars,
     }
 
-
+# TODO: so for each problem you have to manually define what the lagrangian is instead of allowing the code to automatically derive it? That would be against what we claim metaease does.
+# We need a similar structure to metaopt here, where you define polynomials/terms and tehn allow the code to automatically derive the lagrangian, if not, you need to figure out how to tell the user that they need to implement this and how, this
+# increases the burden on them though.
 def get_TE_lagrangian(
     num_nodes, edges, input_dict, give_relaxed_gap=False, given_all_paths=None
 ):
@@ -1488,7 +1496,8 @@ class TEProblem(Problem):
             "optimal_total_flow": total_flow_value,
             "all_vars": all_vars,
         }
-
+   # TODO: I see multiple instances of optimal TE, what is each one, why are there multiple? If there is a good reason to have many, add comments to differentiate them.
+   # On a similar note, I saw that you have both old version and new version of different functions, always keep the new version and delete all old code in public releases: old code is liability especially since you wont be maintaining it.
     def optimal_TE(
         self, num_nodes, edges, demands, possible_demands=None, given_all_paths=None
     ):

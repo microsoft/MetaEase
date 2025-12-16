@@ -58,6 +58,7 @@ def main(
            d. Track best gap found across all seeds
         3. Save best results and configuration
     """
+    # TODO: it is not clear to me what exactly is inputs_scale_fixed_points -- is it supposed to be true/false, or something else. The documentation there can be improved.
     # Configuration: Parse problem type and get parameters
     problem_type = problem_description["problem_type"]
     parameters = get_parameters(problem_description)

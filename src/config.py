@@ -40,7 +40,8 @@ def load_topology_info(topology_name):
 
     return topology_data
 
-
+# TODO: it seems some of our heuristics are missing here? Dote? also, I think once more I see the importance of in the main readme describing how a user can analyze (1) a new heuristic (2) a new problem class (3) a new problem instance. And describe what
+# changes they need to make to the code to do so.
 PROBLEM_CONFIGS = {
     "vbp": {
         "num_items": 20,
@@ -66,22 +67,22 @@ PROBLEM_CONFIGS = {
 COMMON_PARAMETERS = {
     # Optimization parameters
     "block_length": 0.1, # The size of the block around the current best sample to sample from
-    "num_samples": 50, # The number of samples to generate in each block, this will be multiplied by a multiplier (currently 1.1) to account for the samples that are within the block but with a different code path
+    "num_samples": 50, # The number of samples to generate in each block, this will be multiplied by a multiplier (currently 1.1) to account for the samples that are within the block but with a different code path # TODO: this was not clear.
     "num_iterations": 2000, # The number of iterations to run the gradient ascent for on one klee point
     "gradient_ascent_rate": 0.2, # The learning rate for the gradient ascent, the same rate will be used for all variables
-    "disable_guassian_process": False, # If True, the guassian process will not be used, direct gradient computation will be used (for samples will a lot of variables, up to num_keys_for_gradient=20)
-    "randomized_gradient_ascent": False, # If True, the gradient ascent will be run on randomized inputs, if False, one step gradient ascent is done on all variables at once
+    "disable_guassian_process": False, # If True, the guassian process will not be used, direct gradient computation will be used (for samples with a lot of variables, up to num_keys_for_gradient=20)
+    "randomized_gradient_ascent": False, # If True, the gradient ascent will be run on randomized inputs, if False, one step gradient ascent is done on all variables at once # TODO: this was not clear. needs a more detailed description.
     "num_vars_in_randomized_gradient_ascent": 10, # The number of variables to run the gradient ascent on at once
     "disable_klee": False, # If True, the klee will not be run, only the gradient ascent will run on random samples
     "num_random_seed_samples": 30, # When disable_klee is True, the number of random samples to generate for the gradient ascent
-    "freeze_cluster_fixed_keys": True, # If True, the fixed keys will not be updated
+    "freeze_cluster_fixed_keys": True, # If True, the fixed keys will not be updated # TODO: this is not clear and needs more clarified explanation.
     # Logging parameters
     "relaxed_gap_save_interval": 10, # The interval to save the relaxed gap
     "actual_gap_save_interval": 100, # The interval to save the actual gap
     "save_and_plot_interval": 10, # The interval to save the and plot the results
     "enable_plotting": True, # If True, the results will be plotted
     # Filtering parameters
-    "use_gaps_in_filtering": True, # If True, the gaps will be computed and used to filter the kleesamples
+    "use_gaps_in_filtering": True, # If True, the gaps will be computed and used to filter the kleesamples # TODO: it would be good to include in this comment "how" they will be used to do so.
     "remove_zero_gap_inputs": True, # If True, the klee samples with zero gap will be removed
     "keep_redundant_code_paths": False, # If True, the redundant code paths will be kept, True used mostly for VBP since we want the code-path changes to happen
     # Klee parameters
@@ -89,14 +90,14 @@ COMMON_PARAMETERS = {
     "ignore_gap_value_in_num_non_zero_rounds": False,
     "num_non_zero_rounds": 1, # Run one klee setting for at most num_non_zero_rounds round untill you find a non-zero gap, used alonside list_of_input_paths_to_exclude
     "max_num_scalable_klee_inputs": 16, # The maximum number of klee variables
-    "preferred_values": None, # The preferred values for the klee variables, if None, the values will be randomly sampled from the min_value to max_value
+    "preferred_values": None, # The preferred values for the klee variables, if None, the values will be randomly sampled from the min_value to max_value # TODO: would benefit from guidence on how to set it.
     # Time budget parameters
     "early_stop": True, # If True, the gradient ascent will stop when the relaxed gap converges based on has_converged function
     "max_num_klee_points_per_iteration": None, # The maximum number of klee points to run in each iteration
     "max_time_per_klee_point": None, # The maximum time to run gradient ascent on a klee point
     "max_total_time": None, # The maximum total time to run MetaEase
 }
-
+# TODO: could use a comment on what these are.
 PARAMETERS = {
     "vbp": {
         "min_value": 0.0,
