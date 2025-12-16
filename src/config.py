@@ -84,7 +84,7 @@ COMMON_PARAMETERS = {
     # Filtering parameters
     "use_gaps_in_filtering": True, # If True, the gaps will be computed and used to filter the kleesamples # TODO: it would be good to include in this comment "how" they will be used to do so.
     "remove_zero_gap_inputs": True, # If True, the klee samples with zero gap will be removed
-    "keep_redundant_code_paths": False, # If True, the redundant code paths will be kept, True used mostly for VBP since we want the code-path changes to happen
+    "keep_redundant_code_paths": False, # If True, the redundant code paths will be kept, True used mostly for VBP since we want the code-path changes to happen. Due to klee time constraints, two paths can be similar up to a point but then diverge after that, but we see them as inputs generating the same code-paths because it never went all the way
     # Klee parameters
     "use_MetaOpt_cluster": False, # If True, the MetaOpt cluster will be used (mostly for TE). Make sure to also provide cluster_path in the problem description
     "ignore_gap_value_in_num_non_zero_rounds": False,
