@@ -1,4 +1,4 @@
-# Introduction 
+# MetaEase: Heuristic Analysis from Source Code via Symbolic-Guided Optimization
 MetaEase is a framework for automatically finding worst-case inputs of heuristics by maximizing the gap between heuristic and optimal solutions. It combines symbolic execution (KLEE) with gradient-based optimization to efficiently explore the input space.
 
 This codebase supports multiple problems:
@@ -8,9 +8,60 @@ This codebase supports multiple problems:
 - Maximum Weighted Matching (MWM): Greedy
 - IP--Optical Network Optimization: Arrow Heuristic
 
+# Code Structure
+
+```
+MetaEase_MSR/
+├── src/                          # Main source code directory
+│   ├── paper.py                  # Main entry point for running experiments
+│   ├── metaease.py               # Core MetaEase algorithm implementation
+│   ├── config.py                 # Problem configuration and parameter management
+│   ├── common.py                 # Shared utilities and helper functions
+│   ├── logger.py                 # Async logging functionality
+│   │
+│   ├── problems/                 # Problem-specific implementations
+│   │   ├── problem.py            # Base Problem class (abstract interface)
+│   │   ├── programs_TE.py        # Traffic Engineering problem implementations
+│   │   ├── programs_vbp.py       # Vector Bin Packing problem implementations
+│   │   ├── programs_knapsack.py  # Knapsack problem implementations
+│   │   ├── programs_max_weighted_matching.py  # MWM problem implementations
+│   │   ├── programs_arrow.py     # Arrow heuristic (IP-Optical) implementations
+│   │   └── DOTE/                 # DOTE (Deep Optimization for Traffic Engineering) problem implementation
+│   │
+│   ├── gradient_ascent.py        # Gradient ascent optimization (MetaEase)
+│   ├── hill_climbing.py          # Hill climbing baseline
+│   ├── simulated_annealing.py    # Simulated annealing baseline
+│   ├── random_sampling.py        # Random sampling baseline
+│   ├── gap_sample_based.py       # Sample-based gradient baseline
+│   │
+│   ├── run_klee.py               # KLEE symbolic execution integration
+│   ├── run_utils.py              # Execution and compilation utilities
+│   ├── opt_utils.py              # Optimization helper functions
+│   ├── clustering_utils.py       # Variable clustering/partitioning utilities
+│   ├── analysis_utils.py         # Analysis and result processing utilities
+│   ├── utils.py                  # General utility functions
+│   └── ablation_DemandPinning.py # Ablation study script for DemandPinning
+│
+├── scripts/                      # Analysis and visualization scripts
+│   ├── generate_experiment_file.py  # Aggregates experiment results
+│   ├── plot_methods.py           # Generates comparison plots across methods
+│   ├── plot_ablation.py          # Generates ablation study plots
+│   ├── plot_comparison.py        # Comparison visualization utilities
+│   ├── plot_common.py            # Shared plotting utilities
+│   └── log_parser.py             # Log parsing utilities
+│
+├── topologies/                   # Network topology data files
+│
+├── paper.sh                      # Script to run all paper experiments from section 5 of the paper
+├── paper_subset.sh               # Script to run subset of experiments from section 5 of the paper
+├── environment.yml               # Conda environment configuration
+├── requirements.txt              # Python package dependencies
+└── README.md                     # This file
+```
+
 
 # Setting up the environment
-The following instructions are for Linux.
+The following instructions are for Linux and macOS. If you are using Windows, you can use the Windows Subsystem for Linux (WSL) to run the code.
 
 ## Install Conda (if not already installed)
 ```bash
@@ -30,7 +81,11 @@ test -d /home/linuxbrew/.linuxbrew && eval “$(/home/linuxbrew/.linuxbrew/bin/b
 echo “eval \“\$($(brew --prefix)/bin/brew shellenv)\“” >> ~/.bashrc
 
 # Install clang
-sudo apt install clang
+# Update package lists
+sudo apt update
+
+# Install clang and build essentials
+sudo apt install -y clang llvm build-essential cmake
 ```
 
 ## Install Klee
@@ -42,7 +97,6 @@ This may take a while.
 
 ## Set up the environment
 ```bash
-cd MetaOptimize
 conda env create -f environment.yml
 conda activate metaease
 pip install -r requirements.txt
@@ -53,12 +107,14 @@ echo 'conda activate metaease' >> ~/.bashrc
 
 To run the code, you can use the following command:
 ```bash
-python src/paper.py --problem <problem> --method <method>
+cd src # This is important to run the code from the src directory
+python paper.py --problem <problem> --method <method> --base-save-dir <base-save-dir>
 ```
 
 For example, to run the code for the DemandPinning problem on the Abilene topology with the MetaEase method, you can use the following command:
 ```bash
-python src/paper.py --problem TE_DemandPinning_abilene --method MetaEase
+cd src
+python paper.py --problem TE_DemandPinning_abilene --method MetaEase --base-save-dir ../logs_final_TE
 ```
 
 List of all problems:
@@ -266,7 +322,7 @@ This artifact includes a dedicated script to reproduce ablations studies from Se
 From the repository root:
 
 ```bash
-cd src
+cd src # This is important to run the code from the src directory
 python ablation_DemandPinning.py
 ```
 
@@ -286,7 +342,7 @@ The plotting helper for ablations is `scripts/plot_ablation.py`. It can generate
    - `plot_ablation.py` currently contains **hard-coded absolute paths** in the `ablation_dirs` dictionaries (e.g., under the `Problem == "Seed"`, `"Gradient"`, or `"Parameter_K"` branches).  
    - Change these directory strings so they point to your local `ablation_DemandPinning` output directory, for example:
      - replace paths like `/home/ubuntu/MetaEase/MetaOptimize/ablation_DemandPinning/...`
-     - with paths like `/data1/pantea/MetaEaseArtifact/MetaEase_MSR/ablation_DemandPinning/...` (or whatever path you used).
+     - with your local path (or whatever path you used).
 
 2. **Choose which ablation family to plot**  
    At the top of `scripts/plot_ablation.py`, set:
@@ -317,3 +373,36 @@ The plotting helper for ablations is `scripts/plot_ablation.py`. It can generate
    ```
 
    For example, if `Problem = "Seed"`, the plots will be under `ablation_plots_Seed/`.
+
+# Citation
+If you use this code in your research, please cite our paper:
+```bibtex
+@inproceedings{karimi2026metaease,
+  title={MetaEase: Heuristic Analysis from Source Code via Symbolic-Guided Optimization},
+  author={Karimi, Pantea and Kakarla, Siva Kesava Reddy and Namyar, Pooria and Segarra, Santiago and Beckett, Ryan and Alizadeh, Mohammad and Arzani, Behnaz},
+  booktitle={Proceedings of the 23rd USENIX Symposium on Networked Systems Design and Implementation (NSDI)},
+  year={2026}
+}
+```
+
+Also, you can checkout my other heuristic analysis tool:
+XPlain: Towards Safer Heuristics With XPlain
+
+```bibtex
+@inproceedings{10.1145/3696348.3696884,
+author = {Karimi, Pantea and Pirelli, Solal and Kakarla, Siva Kesava Reddy and Beckett, Ryan and Segarra, Santiago and Li, Beibin and Namyar, Pooria and Arzani, Behnaz},
+title = {Towards Safer Heuristics With XPlain},
+year = {2024},
+isbn = {9798400712722},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+url = {https://doi.org/10.1145/3696348.3696884},
+doi = {10.1145/3696348.3696884},
+abstract = {Many problems that cloud operators solve are computationally expensive, and operators often use heuristic algorithms (that are faster and scale better than optimal) to solve them more efficiently. Heuristic analyzers enable operators to find when and by how much their heuristics underperform. However, these tools do not provide enough detail for operators to mitigate the heuristic's impact in practice: they only discover a single input instance that causes the heuristic to underperform (and not the full set) and they do not explain why. We propose XPlain, a tool that extends these analyzers and helps operators understand when and why their heuristics underperform. We present promising initial results that show such an extension is viable.},
+booktitle = {Proceedings of the 23rd ACM Workshop on Hot Topics in Networks},
+pages = {68–76},
+numpages = {9},
+keywords = {Domain-Specific Language, Explainable Analysis, Heuristic Analysis},
+location = {Irvine, CA, USA},
+series = {HotNets '24}
+}

@@ -625,10 +625,7 @@ def update_with_closest_angle_to_gradient(
                 best_individual[key] = best_sample[key]
                 continue
 
-        # if "lambda_flow_demand" in remaning_keys:
-        #     """TODO: This is a hack, for TE this works better"""
-        #     best_individual[key] = best_sample[key] + sum([(best_individual[new_key] - best_sample[new_key]) * gradient_dict[new_key] for new_key in keys_for_heuristic])
-        # else:
+
         gradient_ascent_rate = max(1, 0.02 * (max(thresholds[key]) - min(thresholds[key])))
         best_individual[key] = (
             best_sample[key] + gradient_dict[key] * gradient_ascent_rate
