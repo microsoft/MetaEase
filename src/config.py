@@ -182,7 +182,8 @@ def handle_MWM_parameters(problem_description):
 
     topology_info = load_topology_info(topology_name)
     return topology_info
-
+# TODO: this seems like it is fragile especially when it comes to supporting new heuristic types.
+# think through a proper design where the inputs are taken in a way that can generalize beyond the examples we have.
 def get_parameters(problem_description):
     """Get parameters based on problem description including topology for TE problems."""
     problem_type = problem_description["problem_type"]

@@ -218,7 +218,7 @@ def main(
             klee_path = os.path.join(
                 save_dir, f"klee_inputs_{klee_idx}_{non_zero_round}.json"
             )
-
+            # TODO: I would suggest creating a run_klee function and calling it, there seems to be a lot of code that is the mechanics of running Klee and the code will be cleaner if you bundle all of that.
             # Run KLEE symbolic execution to generate path-representative seeds
             # KLEE explores distinct code paths and generates one input per path
             # This avoids redundant random restarts and finds diverse starting points
@@ -354,7 +354,7 @@ def main(
                 )
                 with open(klee_path, "w") as f:
                     json.dump(klee_samples, f)
-
+            # TODO: this should also be its own function.
             # prasing and cleaning the klee_samples
             if os.path.exists(klee_path):
                 with open(klee_path, "r") as f:

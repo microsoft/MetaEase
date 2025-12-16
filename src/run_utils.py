@@ -1022,7 +1022,7 @@ def identify_gap_contributing_variables(
 
     return contributing_vars
 
-
+# TODO: you can add more to the description in this function to describe what is the rational for using this function and how you decide thresholds and why it is useful.
 def handle_fixed_variables(
     cluster_variables,
     fixed_variables,
