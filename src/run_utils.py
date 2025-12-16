@@ -247,7 +247,7 @@ def process_klee_inputs_parallel(
     progress_lock = manager.Lock()  # Create a separate lock for synchronization
     progress_dict["completed"] = 0
     progress_dict["best_gap"] = float("-inf")
-
+    # TODO: check for potential race conditions. especially when you set total_optimal_calls and total_heuristic_calls, you may need a lock there.
     def update_progress(batch_results):
         try:
             with progress_lock:  # Use the separate lock for synchronization
