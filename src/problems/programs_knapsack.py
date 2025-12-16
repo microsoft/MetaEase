@@ -98,7 +98,7 @@ def closed_form_relaxed_optimal_knapsack(values, weights, capacity):
         "lambda": lambda_value,
     }
 
-
+# TODO: needs better documentation for why this function exits, what it is used for and when.
 def knapsack_relaxed_optimal_solution_derivatives(values, weights, capacity):
     # Calculate value densities (value-to-weight ratio) and sort items by density in descending order
     items = list(enumerate(zip(values, weights)))
@@ -158,7 +158,7 @@ def knapsack_relaxed_optimal_solution_derivatives(values, weights, capacity):
         "derivatives": derivatives,
     }
 
-
+# TODO: documentation needs improvement to discuss the difference between this function and the one before it.
 def get_knapsack_optimal_solution_gradient(input_dict, num_items, capacity):
     """
     Computes the gradient of the optimal knapsack solution with respect to value[i] and weight[i].
@@ -232,7 +232,7 @@ def get_knapsack_optimal_solution_gradient(input_dict, num_items, capacity):
 
     return gradient
 
-
+# TODO: you say the lagrange function is defined as and then describe an optimization problem as opposed to a true lagrangian. You should probably clean up the function documentation.
 def optimal_knapsack(values, weights, capacity):
     """
     The lagrange function is defined as:
@@ -292,7 +292,7 @@ def optimal_knapsack(values, weights, capacity):
         total_weight,
     )
 
-
+# TODO: make it clear that this is a heuristic in the name maybe? Should probably devise a naming convention for how functions that are heuristic are separated from optimal, what I see is that you have Optimal, optimal_relaxed, and then your using the conventional names for heuristics. you may want to have a heuristic pre-fix for those too.
 def greedy_knapsack(values, weights, capacity):
     # Scale the floating point values and weights to integers to make compatible with the knapsack solver
     values = [int(v * SCALE_FACTOR) for v in values]
@@ -446,7 +446,7 @@ class KnapsackProblem(Problem):
             "input_dict": input_dict,
             "num_items": len(values),
         }
-
+ # TODO: again what are these thresholds and what are they used for?
     def get_thresholds(self, relaxed_all_vars):
         thresholds = {key: (0, self.problem_config["capacity"]) for key in self.all_klee_var_names}
         extra_vars = ['lambda']

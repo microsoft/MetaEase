@@ -32,7 +32,11 @@ ENABLE_PRINT = False
 LOAD_TICKETS_FROM_FILE = True
 ENABLE_PARALLEL_PROCESSING = True  # Set to False to disable parallel processing
 
-
+# TODO: this can use documentation since this is not a standard CS problem, you can describe what the 
+# Optimal is doing differently from what arrow does and what it means to be optimal in this comment.
+# TODO: this seems like a standard multi-commodity flow problem, is not solving Arrow optimally? am I right? I believe what your doing is
+# first finding the set of lottery tickets for the optimal and then using those computing the total flow you can achieve optimally under that setting.
+# All of that context needs to be explained in a class documentation/file documentation.
 def optimal_TE_for_arrow(num_nodes, edges, demands, possible_demands=None):
     # Create the solver
     solver = pywraplp.Solver.CreateSolver("GLOP")
@@ -157,6 +161,9 @@ def optimal_TE_for_arrow(num_nodes, edges, demands, possible_demands=None):
 # ---------------------------------------------------------------------
 # Generate tickets using feasibility optimization
 # ---------------------------------------------------------------------
+# TODO: add documentaition such as:
+# Calls generate_general_feasibility_tickets under the hood (which produces all mathematically valid ways to assign fiber wavelengths to logical edges.)
+# This function wraps around that call to filter any solutions that are technically valid but useless...
 def generate_all_tickets(
     fiber_dict: Dict[int, Fiber],
     num_tickets: Optional[int] = None,
@@ -191,7 +198,7 @@ def generate_all_tickets(
     tickets = filter_wasteful_tickets(tickets, fiber_dict)
     return tickets, node_list, fiber_edge_constraints, all_edges
 
-
+# TODO: the documentation for this function can be improved to tell the reader what is the difference between this and the previous function in this file.
 def generate_general_feasibility_tickets(
     fiber_dict: Dict[int, Fiber], node_list: List[str]
 ) -> Tuple[List[LotteryTicket], List[str], Dict[int, Dict], List[Tuple[str, str]]]:
@@ -290,7 +297,9 @@ def generate_general_feasibility_tickets(
     print(f"Successfully created {len(tickets)} tickets")
     return tickets, node_list, fiber_edge_constraints, all_edges
 
-
+# TODO: again, this function's documentation needs to be updated to describe when and how this function should be used.
+# TODO: one thing that may be confusing is that this file is very different than those for knapsack, mwm, or other hueristics we have.
+# It has much more constructs that are different. If your guiding someone to add a new heuristic to evaluate, how would you factor this in?
 def enumerate_general_solutions(
     fiber_edge_constraints: Dict[int, Dict], all_edges: List[Tuple[str, str]]
 ) -> List[Dict[Tuple[str, str], int]]:
@@ -756,6 +765,7 @@ def _copy_vars(
 
 
 class ArrowProblem(Problem):
+    # TODO: the init function is massive and hard to follow, break it down and use helper functions.
     def __init__(self, problem_config_path):
         start_time = time.time()
         super().__init__(problem_config_path)
@@ -1230,7 +1240,7 @@ class ArrowProblem(Problem):
             "selected_tickets": selected_tickets,
             "best_ticket": best_ticket,
         }
-
+   # TODO: adjust comment --- it doesnt' make the heuristic deterministic, it allows you to find average case adversarial scenarios where you take the frequentists approach to probability.
     def arrow_wrapper(self, demands: Dict[Tuple[str, str], int]):
         """
         Wrapper function that runs Arrow heuristic multiple times and averages the results.
@@ -1314,7 +1324,7 @@ class ArrowProblem(Problem):
             "heuristic": True,
             "code_path_num": code_path_num,
         }
-
+  # TODO: needs at the very least a comment about what is happening here in the code.
     def optimal_wrapper(self, demands: Dict[Tuple[str, str], int]):
         if ENABLE_PARALLEL_PROCESSING and len(self.all_tickets_and_nodes_for_scenarios) > 1:
             # Use parallel processing for scenarios
@@ -1371,7 +1381,7 @@ class ArrowProblem(Problem):
             "relaxed": False,
         }
         return optimal_sol
-
+    # TODO: needs a comment, especially about the difference between this and the function at the top of the file.
     def optimal(
         self, demands: Dict[Tuple[str, str], int], all_tickets: List[LotteryTicket]
     ):
@@ -1524,7 +1534,7 @@ class ArrowProblem(Problem):
             "selected_ticket_idx": ticket_id,
             "relaxed": False,
         }
-
+   # TODO: this function needs a comment.
     def relaxed_optimal_wrapper(self, demands: Dict[Tuple[str, str], int]):
         if ENABLE_PARALLEL_PROCESSING and len(self.all_tickets_and_nodes_for_scenarios) > 1:
             # Use parallel processing for scenarios
@@ -2119,7 +2129,7 @@ class ArrowProblem(Problem):
         # print(f"get_arrow_lagrangian_gradient took {time.time() - start_time:.4f}s")
         return grad
 
-
+    # TODO: there is two of these functions, what is the difference between the two, if you need both add comments to differentiate, if one is the one you ended up using remove the other one.
     def get_arrow_lagrangian_gradient2(
         self,
         input_dict: Dict[str, float],
@@ -2480,7 +2490,7 @@ class ArrowProblem(Problem):
             "relaxed_optimal_value": optimal_sol["optimal_total_flow"],
             "relaxed_all_vars": relaxed_all_vars,
         }
-
+    # TODO: needs a more discriptive comment, who sets these thresholds? how do you determine what they should be?
     def get_thresholds(self, relaxed_all_vars):
         """
         Get variable thresholds for the Arrow problem.
