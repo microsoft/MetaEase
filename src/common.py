@@ -21,6 +21,7 @@ from gradient_ascent import (
 
 LAMBDA_MAX_VALUE = 1000000
 
+# TODO: these each can use a comment that describes what each of them is used for.
 def MetaEase_specific_parameters() -> list[str]:
     return [
             "block_length",
@@ -33,6 +34,8 @@ def MetaEase_specific_parameters() -> list[str]:
             "max_num_klee_points_per_iteration",
             ]
 
+# TODO: one thing you need to add as documentation is how the user can add a new heuristic or a new problem cass to the mix, that should go into the main readme file for MetaEase.
+# TODO: here you need to have a comment documentation on what the user needs to do.
 def get_problem_description(args) -> dict:
     if args.problem.startswith("TE"):
         heuristic_name = args.problem.split("_")[-2]
@@ -42,6 +45,10 @@ def get_problem_description(args) -> dict:
         use_MetaOpt_cluster = False
         cluster_path = None
         max_num_paths = float("inf")
+        # TODO: Instead of having these based on the name of the topology, to allow for more general use-cases check the size of the topology and decide based on that.
+        # It is surprising to me that we are reducing the samples for the bigger problem instances, in part because it seems that those would be the scenario where we would need more samples to do proper search.
+        # I get you probably did that to get the experiment to run faster but that is not the right way.
+        # TODO: another comment, to allow for more general runtimes, I would suggest having a method that calls the partitioning algorithm for a new topology that needs it based on the topology size. This is not clean enough.
         if topology in ["Cogentco", "Uninet2010"]:
             num_samples = 20
             max_num_paths = 4
@@ -68,6 +75,7 @@ def get_problem_description(args) -> dict:
             "cluster_path": cluster_path,
             "max_num_paths": max_num_paths,
         }
+        # TODO: instead of hardcoded numeric inputs have these as parameters in a config file maybe?
         if heuristic_name == "DemandPinning":
             problem_description["disable_klee"] = False
             problem_description["num_random_seed_samples"] = 0

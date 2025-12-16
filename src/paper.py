@@ -15,6 +15,7 @@ Supported methods:
 """
 
 import argparse
+import os
 from metaease import metaease_main
 from random_sampling import random_sampling_main
 from simulated_annealing import simulated_annealing_main
@@ -23,6 +24,8 @@ from gap_sample_based import sample_based_gradient_main
 import sys
 
 if __name__ == "__main__":
+    # TODO: move to parser class, add proper documentation to the class on what the config options are with proper explanations for each. For example, there is not sufficient explanation for what "inputs_scale_fixed_points means."
+    # TODO: in the documentation add for each parameter guidence on how the user should think about setting them.
     parser = argparse.ArgumentParser()
     parser.add_argument("--problem", type=str, required=True)
     parser.add_argument("--base-save-dir", type=str, default="../logs_final")
@@ -40,6 +43,12 @@ if __name__ == "__main__":
     parser.add_argument("--HC-num-neighbors", type=int, default=10, help="Number of neighbors to evaluate per iteration for Hill Climbing")
     parser.add_argument("--HC-step-size", type=float, default=0.1, help="Step size for Hill Climbing")
     args = parser.parse_args()
+
+    # Convert base_save_dir to absolute path relative to this script's directory
+    # This allows the script to be run from any directory without path issues
+    if not os.path.isabs(args.base_save_dir):
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        args.base_save_dir = os.path.abspath(os.path.join(script_dir, args.base_save_dir))
 
     if args.method == "MetaEase":
         if args.klee_task == "inputs_scale_fixed_points":

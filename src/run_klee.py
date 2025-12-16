@@ -35,6 +35,49 @@ class KleeRunner:
         """Initialize KLEE runner with timeout."""
         self.timeout_sec = timeout_sec
 
+    def _find_klee_include_path(self) -> str:
+        """
+        Dynamically find KLEE include directory.
+
+        Searches common installation locations for klee/klee.h header file.
+        Raises an exception with helpful message if KLEE headers are not found.
+
+        Returns:
+            Path to KLEE include directory (e.g., /home/linuxbrew/.linuxbrew/include)
+        """
+        # First, try to find klee executable and derive path from it
+        klee_which = subprocess.run(["which", "klee"], capture_output=True, text=True)
+        if klee_which.returncode == 0:
+            klee_binary = klee_which.stdout.strip()
+            # Binary is typically at PREFIX/bin/klee, so include is at PREFIX/include
+            klee_prefix = os.path.dirname(os.path.dirname(klee_binary))
+            candidate_include = os.path.join(klee_prefix, "include")
+            klee_header = os.path.join(candidate_include, "klee", "klee.h")
+            if os.path.exists(klee_header):
+                return candidate_include
+
+        # Fallback: search common Homebrew locations
+        search_paths = [
+            "/home/linuxbrew/.linuxbrew/include",
+            "/opt/homebrew/include",
+            "/usr/local/include",
+            "/usr/include"
+        ]
+
+        for search_path in search_paths:
+            klee_header = os.path.join(search_path, "klee", "klee.h")
+            if os.path.exists(klee_header):
+                return search_path
+
+        # If we get here, KLEE headers were not found
+        raise Exception(
+            "KLEE header files not found!\n"
+            "Searched locations:\n" + "\n".join(f"  - {p}/klee/klee.h" for p in search_paths) + "\n"
+            "Please ensure KLEE is properly installed via:\n"
+            "  brew install klee\n"
+            "Or install from source: https://klee.github.io/"
+        )
+
     def get_bitcode(self, c_filename: str) -> str:
         """
         Compile C program to LLVM bitcode for KLEE.
@@ -92,6 +135,9 @@ class KleeRunner:
 
             return bitcode
         else:  # Linux
+            # Dynamically find KLEE include path instead of hardcoding version
+            klee_include_path = self._find_klee_include_path()
+
             compile_command = [
                 "clang",
                 "-emit-llvm",
@@ -101,7 +147,7 @@ class KleeRunner:
                 "-Xclang",
                 "-disable-O0-optnone",
                 "--target=x86_64-unknown-linux-gnu",  # Set target triple explicitly
-                "-I/home/linuxbrew/.linuxbrew/Cellar/klee/3.1_4/include",  # Add KLEE include path
+                f"-I{klee_include_path}",  # Add KLEE include path (dynamically discovered)
                 "-fno-stack-protector",  # Disable stack protector to avoid segmentation faults
                 "-mno-red-zone",  # Disable red zone to avoid stack issues
                 c_filename,

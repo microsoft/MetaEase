@@ -177,7 +177,8 @@ def main(
         if len(cluster_variables) == 0:
             logger.info("No variables to optimize for this cluster")
             # copy the json file from the previous cluster
-            shutil.copy(
+            # Use copyfile instead of copy to avoid permission issues on Windows filesystems
+            shutil.copyfile(
                 os.path.join(
                     save_dir, f"fixed_variables_kleeIteration{klee_idx - 1}.json"
                 ),
@@ -601,7 +602,7 @@ def main(
     # Cleanup
     logger.shutdown()
 
-
+# TODO: it seems like a problem consists of both the heuristic and the inputs to the heuristic, I would suggest separating the two, have the heuristic and the inputs to the heuristic be two different inputs.
 def metaease_main(args):
     """
     Main entry point for MetaEase method.
