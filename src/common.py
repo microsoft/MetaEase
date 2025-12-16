@@ -22,22 +22,62 @@ from gradient_ascent import (
 
 LAMBDA_MAX_VALUE = 1000000
 
-# TODO: these each can use a comment that describes what each of them is used for.
 def MetaEase_specific_parameters() -> list[str]:
+    """
+    Returns the list of MetaEase-specific configuration parameter names.
+    These parameters control the core behavior of the MetaEase search algorithm.
+    """
     return [
+            # Length of blocks used for partitioning the search space
             "block_length",
+            # Maximum number of KLEE-generated inputs to consider for scalability
             "max_num_scalable_klee_inputs",
+            # Whether to use gap values when filtering candidate inputs
             "use_gaps_in_filtering",
+            # Whether to remove inputs that have zero gap from consideration
             "remove_zero_gap_inputs",
+            # Learning rate for gradient ascent optimization
             "gradient_ascent_rate",
+            # Maximum time (in seconds) allowed per KLEE point evaluation
             "max_time_per_klee_point",
+            # Number of rounds with non-zero improvements before stopping
             "num_non_zero_rounds",
+            # Maximum number of KLEE points to process per iteration
             "max_num_klee_points_per_iteration",
             ]
 
-# TODO: one thing you need to add as documentation is how the user can add a new heuristic or a new problem cass to the mix, that should go into the main readme file for MetaEase.
-# TODO: here you need to have a comment documentation on what the user needs to do.
 def get_problem_description(args) -> dict:
+    """
+    Returns a dictionary containing the problem configuration based on command-line arguments.
+
+    The problem name (args.problem) determines the problem type and heuristic settings.
+
+    HOW TO ADD A NEW HEURISTIC:
+    ---------------------------
+    1. Add a new elif branch in the appropriate problem type section (e.g., under TE, arrow, vbp, etc.)
+    2. Set the heuristic_name key to your new heuristic's name
+    3. Configure the relevant parameters for your heuristic (disable_klee, num_samples, etc.)
+    4. Implement the heuristic logic in the corresponding problem module
+
+    HOW TO ADD A NEW PROBLEM CLASS:
+    -------------------------------
+    1. Add a new elif branch at the end of this function checking for your problem prefix
+       (e.g., elif args.problem.startswith("my_new_problem"):)
+    2. Define a problem_description dictionary with at minimum:
+       - "problem_type": your problem type identifier
+       - "heuristic_name": the heuristic to use
+       - MetaEase parameters from MetaEase_specific_parameters()
+    3. Create a new problem module in src/problems/ implementing:
+       - The problem's objective function
+       - Input generation logic
+       - Any heuristic-specific methods
+
+    Args:
+        args: Command-line arguments containing at least 'problem' and 'method' attributes
+
+    Returns:
+        dict: Problem configuration dictionary with all necessary parameters
+    """
     if args.problem.startswith("TE"):
         heuristic_name = args.problem.split("_")[-2]
         topology = args.problem.split("_")[-1]

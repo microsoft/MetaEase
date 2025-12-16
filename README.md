@@ -380,7 +380,7 @@ If you use this code in your research, please cite our paper:
 @inproceedings{karimi2026metaease,
   title={MetaEase: Heuristic Analysis from Source Code via Symbolic-Guided Optimization},
   author={Karimi, Pantea and Kakarla, Siva Kesava Reddy and Namyar, Pooria and Segarra, Santiago and Beckett, Ryan and Alizadeh, Mohammad and Arzani, Behnaz},
-  booktitle={Proceedings of the 23rd USENIX Symposium on Networked Systems Design and Implementation (NSDI)},
+  journal = {USENIX Symposium on Networked Systems Design and Implementation 2026},
   year={2026}
 }
 ```
