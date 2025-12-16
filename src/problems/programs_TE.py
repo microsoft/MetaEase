@@ -25,6 +25,7 @@ import random
 # TODO: relative paths you have strewn about everywhere are a bit risky, better to fix with respect to base directory of MetaEase.
 # TODO: remove all the print statements you had added for debugging/remove all the comments of that too.
 # TODO: line 176-181 -- you can cache the edge to path mapping once to avoid recommputing it often.
+# TODO: need proper error handling for solver calls so that the solution crashes with meaningful errors.
 ENABLE_PRINT = False
 DISABLE_CUSTOMIZATION = False
 

@@ -537,7 +537,7 @@ def normal_gradient_ascent(
         # if the code path is different, return None to indicate that the gradient ascent is not successful
         return None
 
-
+# TODO: this function needs documentation that explains what we are doing and why.
 def update_with_closest_angle_to_gradient(
     population,
     best_sample,

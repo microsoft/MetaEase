@@ -414,7 +414,7 @@ def process_klee_inputs_parallel(
         total_heuristic_calls,
     )
 
-
+# TODO: this can use better documentation, especially since the parameters matter.
 def filter_single_klee_input(args):
     """Process a single KLEE input for filtering."""
     klee_input_value, problem, use_gaps_in_filtering, minimize_is_better = args
@@ -444,7 +444,7 @@ def filter_single_klee_input(args):
         "optimal_all_vars": optimal_all_vars,
     }
 
-
+# TODO: it seems for each heuristic the user is also specifying how to detect whether an input maps to a different code-path? Is there a way to automate that process?
 def filter_klee_inputs(klee_input_values, problem, use_gaps_in_filtering=False, minimize_is_better=False, remove_zero_gap_inputs=False, keep_redundant_code_paths=False):
     """Filter KLEE inputs in parallel with improved memory management and progress tracking."""
     print(f"Filtering {len(klee_input_values)} klee inputs in parallel")
@@ -549,7 +549,7 @@ def filter_klee_inputs(klee_input_values, problem, use_gaps_in_filtering=False, 
 
     return filtered_klee_input_values, gaps, filtered_results
 
-
+# TODO: the function documentation needs to be more descriptive of what is happening, I saw where this is called and there is not enough context there either.
 def filter_klee_inputs_sequential(klee_input_values, problem, use_gaps_in_filtering=False, minimize_is_better=False, remove_zero_gap_inputs=False, keep_redundant_code_paths=False):
     """Filter KLEE inputs sequentially with progress tracking."""
     print(f"Filtering {len(klee_input_values)} klee inputs sequentially")
@@ -795,6 +795,7 @@ def maximize_values_for_klee_path(
             )
             logger.log(logger.log_entry("Min gap: None (no valid gaps)"))
         # Log max gap and number of inputs
+        # TODO: throughout your code, remove all commented out code to clean it up.
         logger.log(logger.log_max_gap(initial_max_gap, len(klee_input_values)))
         # logger.log(
         #     logger.log_entry(

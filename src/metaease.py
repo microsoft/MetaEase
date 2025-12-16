@@ -398,6 +398,8 @@ def main(
                     json.dump(klee_samples, f)
 
             # Add random samples if we are not using a seed file or we are disabling klee or if klee has failed or has only one code-path or the problem type is arrow, PoP or knapsack
+            # TODO: I would suggest modifying this for generality, specifically, hae the problem/heuristic parameters have a parameter called "random", and if that parameter is set, then do sampling (and you can also get as input any such parameters.)
+            # Right now your hard-coding the names of the heuristics that are random and thats not good because it limits generality to other new problems.
             if not parameters.get("seed_file", False) and (
                 (not os.path.exists(klee_path) and parameters["disable_klee"])
                 or KLEE_ONLY_ONE_CODE_PATH_OR_FAILED

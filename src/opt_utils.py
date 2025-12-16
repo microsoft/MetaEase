@@ -218,7 +218,7 @@ def get_multiplier(num_vars):
     #     return 20
     # else:
     #     return 1.5
-
+# TODO: throughout the code you have miss-spelled Gaussian. fix that.
 def get_gaussian_process(
     problem,
     anchor_input_values,
@@ -300,7 +300,7 @@ def get_gaussian_process(
         print(f"{RED}Gaussian Process analysis took {end_time - start_time:.4f} seconds{RESET}")
     return gp, scaler_x, scaler_y, keys_for_heuristic, filtered_samples
 
-
+# TODO: expand what you mean here by an "anchor input" and describe in more depth what the function is doing in the comment.
 def update_anchor_input_values(
     problem,
     anchor_input_values,
@@ -371,7 +371,7 @@ def update_anchor_input_values(
             # Instead of returning None, try to continue with a zero gradient
             print("Warning: Continuing with zero gradient due to error")
             optimal_gradient = {key: 0.0 for key in relaxed_all_vars.keys()}
-
+        # TODO: can use a comment here.
         if parameters.get("randomized_gradient_ascent", False):
             variable_keys = set(original_keys) - set(assigned_fixed_keys)
             if len(variable_keys) > parameters.get("num_vars_in_randomized_gradient_ascent", 10):
@@ -383,7 +383,7 @@ def update_anchor_input_values(
         for key in current_best_sample.keys():
             if key.startswith("const_") and key not in assigned_fixed_keys:
                 assigned_fixed_keys[key] = current_best_sample[key]
-
+        # TODO: your checking GP disabled after this function so that means sometimes you went through all the trouble to train the function for nothing, may be worth re-ordering.
         # Get Gaussian process with error handling
         try:
             gp_result = get_gaussian_process(
@@ -463,7 +463,7 @@ def update_anchor_input_values(
                     delta = anchor_input_values[key] - round(anchor_input_values[key])
                     # add derivative of gamma*(delta^2): 2*gamma*delta
                     gradient_dict[key] += 2 * gamma * delta
-
+        # TODO: make the comment here more expressive, why do you need to find best sample and how are you going to go about it?
         # Find best sample
         try:
             # Create a lambda that takes a sample and returns just the code path
