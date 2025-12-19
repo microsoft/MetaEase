@@ -319,9 +319,6 @@ def first_fit_decreasing(items: List[Item], bin_size: float):
 
 # TODO: this needs to have in the comment a discussion of how we are doing this given that the problem is discrete and the lagrangian is not differentiable.
 # This reminds me that when we are writing how a user adds new problems we also need to give guidance on how to handle discrete objectives/lagrangians.
-# TODO: another comment that also applies to programs_TE, is that your only computing the lagrangian for the optimal here right? or are you also computing the gradient for the gaussian process?
-# If the former, change your function name to reflect that.
-# TODO: since you are hardcoding gradients it would be good to put the equation for each problem of the gradient as a comment.
 def get_vbp_lagrangian_gradient(
     items: List[Item], bin_size: float, input_values: Dict[str, float]
 ) -> Dict[str, float]:
@@ -576,94 +573,6 @@ class VBPProblem(Problem):
                 if self.bin_size < sum_demand:
                     return False
         return True
-    # TODO: expand this function's documentation to describe when and where it should be used.
-    def get_item_sizes_for_bins(self, num_items, num_bins, random_seed=None):
-        """Generate item sizes that will perfectly fill num_bins bins.
-        Each bin will be filled exactly to capacity by splitting items."""
-        assert num_items >= num_bins
-        if random_seed is not None:
-            random.seed(random_seed)
-
-        bin_size = float(self.bin_size)  # Make sure we're working with float
-        print(
-            f"Generating {num_items} items to fill {num_bins} bins of size {bin_size}"
-        )
-
-        # First, generate num_bins items that exactly fill bins
-        perfect_items = []
-        unsplit_indices = set()  # Track which indices haven't been split yet
-
-        # Start with full bins
-        for i in range(num_bins):
-            perfect_items.append(bin_size)
-            unsplit_indices.add(i)  # Add index to unsplit set
-
-        # Then split some bins randomly to create the remaining items
-        items_needed = num_items - num_bins
-        while items_needed > 0:
-            # Prioritize splitting unsplit items if available
-            if unsplit_indices:
-                split_idx = random.choice(list(unsplit_indices))
-                unsplit_indices.remove(split_idx)
-            else:
-                # If all items have been split at least once, choose randomly
-                split_idx = random.randint(0, len(perfect_items) - 1)
-
-            item_to_split = perfect_items[split_idx]
-
-            # Generate a random split point between 30-70% of the item size
-            # This ensures we don't get too small or too large pieces
-            min_split = item_to_split * 0.1
-            max_split = item_to_split * 0.9
-            split_point = round(random.uniform(min_split, max_split), 3)
-
-            perfect_items[split_idx] = split_point
-            perfect_items.append(item_to_split - split_point)
-            items_needed -= 1
-
-        print(f"Generated items: {perfect_items}")
-        return perfect_items
-
-    def get_permutations_of_item_sizes(
-        self, num_items, num_bins, random_seed=None, max_permutations=40000
-    ):
-        """Get a random subset of permutations of the item sizes that perfectly fill num_bins bins."""
-        if random_seed is not None:
-            random.seed(random_seed)
-
-        item_sizes = self.get_item_sizes_for_bins(num_items, num_bins, random_seed)
-
-        # Calculate total number of possible permutations
-        import math
-
-        total_perms = math.factorial(len(item_sizes))
-        print(f"Total possible permutations: {total_perms}")
-
-        if total_perms <= max_permutations:
-            # If total permutations is manageable, return all of them
-            return list(itertools.permutations(item_sizes))
-
-        # Otherwise, generate random permutations
-        seen = set()
-        result = []
-        attempts = 0
-        max_attempts = max_permutations * 10  # Allow some extra attempts for duplicates
-
-        while len(result) < max_permutations and attempts < max_attempts:
-            # Generate a random permutation by shuffling
-            perm = tuple(random.sample(item_sizes, len(item_sizes)))
-            if perm not in seen:
-                seen.add(perm)
-                result.append(perm)
-            attempts += 1
-
-            if attempts % 1000 == 0:
-                print(
-                    f"Generated {len(result)} unique permutations out of {attempts} attempts"
-                )
-
-        print(f"Generated {len(result)} unique permutations")
-        return result
 
     def convert_input_dict_to_args(self, input_dict):
         items = []
@@ -969,17 +878,3 @@ class VBPProblem(Problem):
             #                 decision_to_input_map[key] = []
             #             decision_to_input_map[key].append(input_var)
         return decision_to_input_map
-
-
-def get_demand_gap(problem, demand):
-    args_dict = problem.convert_input_dict_to_args(demand)
-    optimal_sol = problem.compute_optimal_value(args_dict)
-    heuristic_sol = problem.compute_heuristic_value(args_dict)
-    return heuristic_sol["heuristic_value"] - optimal_sol["optimal_value"]
-
-
-def convert_permutation_to_demand(permutation):
-    demand = {}
-    for i, size in enumerate(permutation):
-        demand[f"demand_item_{i}_dim_0"] = size
-    return demand
