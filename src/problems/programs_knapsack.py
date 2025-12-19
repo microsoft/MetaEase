@@ -232,10 +232,9 @@ def get_knapsack_optimal_solution_gradient(input_dict, num_items, capacity):
 
     return gradient
 
-# TODO: you say the lagrange function is defined as and then describe an optimization problem as opposed to a true lagrangian. You should probably clean up the function documentation.
 def optimal_knapsack(values, weights, capacity):
     """
-    The lagrange function is defined as:
+    The optimal knapsack problem is defined as:
     Maximize sum_{i=1}^{n} value_i * x_i
     subject to sum_{i=1}^{n} weight_i * x_i - capacity <= 0 and x_i = 0 or 1
     lambda >= 0

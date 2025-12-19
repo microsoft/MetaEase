@@ -444,7 +444,6 @@ def filter_single_klee_input(args):
         "optimal_all_vars": optimal_all_vars,
     }
 
-# TODO: it seems for each heuristic the user is also specifying how to detect whether an input maps to a different code-path? Is there a way to automate that process?
 def filter_klee_inputs(klee_input_values, problem, use_gaps_in_filtering=False, minimize_is_better=False, remove_zero_gap_inputs=False, keep_redundant_code_paths=False):
     """Filter KLEE inputs in parallel with improved memory management and progress tracking."""
     print(f"Filtering {len(klee_input_values)} klee inputs in parallel")

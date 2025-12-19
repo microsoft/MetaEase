@@ -830,9 +830,7 @@ def pop_TE(
         "all_vars": final_all_vars,
     }
 
-# TODO: so for each problem you have to manually define what the lagrangian is instead of allowing the code to automatically derive it? That would be against what we claim metaease does.
-# We need a similar structure to metaopt here, where you define polynomials/terms and tehn allow the code to automatically derive the lagrangian, if not, you need to figure out how to tell the user that they need to implement this and how, this
-# increases the burden on them though.
+
 def get_TE_lagrangian(
     num_nodes, edges, input_dict, give_relaxed_gap=False, given_all_paths=None
 ):
