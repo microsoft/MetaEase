@@ -607,7 +607,7 @@ if __name__ == "__main__":
             problem_class = ArrowProblem(args.problem_config_path)
 
         if args.task == "inputs" and (args.problem != "vbp" or not VBP_ITEM_USAGE):
-            output = problem_class.generate_heuristic_program(
+            output = problem_class.generate_heuristic_C_program(
                 "klee",
                 list_of_input_paths_to_exclude=args.input_list_to_exclude,
             )
@@ -622,7 +622,7 @@ if __name__ == "__main__":
             if args.use_num_bins:
                 for num_bins in range(2, num_items - 2):
                     print(f"Num bins: {num_bins}")
-                    output = problem_class.generate_heuristic_program(
+                    output = problem_class.generate_heuristic_C_program(
                         "klee",
                         list_of_input_paths_to_exclude=args.input_list_to_exclude,
                         num_klee_inputs=args.max_num_scalable_klee_inputs,
@@ -633,7 +633,7 @@ if __name__ == "__main__":
                         "klee-last", fixed_points=output["fixed_points"], append_mode=True
                     )
             else:
-                output = problem_class.generate_heuristic_program(
+                output = problem_class.generate_heuristic_C_program(
                     "klee",
                     list_of_input_paths_to_exclude=args.input_list_to_exclude,
                     num_klee_inputs=args.max_num_scalable_klee_inputs,
@@ -657,7 +657,7 @@ if __name__ == "__main__":
 
             for round_num in range(num_rounds):
                 print(f"Round {(round_num + 1)}/{num_rounds}")
-                output = problem_class.generate_heuristic_program(
+                output = problem_class.generate_heuristic_C_program(
                     "klee",
                     list_of_input_paths_to_exclude=args.input_list_to_exclude,
                     num_klee_inputs=args.max_num_scalable_klee_inputs,
@@ -685,7 +685,7 @@ if __name__ == "__main__":
                 if args.use_num_bins:
                     for num_bins in range(2, num_items - 2):
                         print(f"Num bins: {num_bins}")
-                        output = problem_class.generate_heuristic_program(
+                        output = problem_class.generate_heuristic_C_program(
                             "klee",
                             list_of_input_paths_to_exclude=args.input_list_to_exclude,
                             num_klee_inputs=args.max_num_scalable_klee_inputs,
@@ -696,7 +696,7 @@ if __name__ == "__main__":
                             "klee-last", fixed_points=output["fixed_points"], append_mode=True
                         )
                 else:
-                    output = problem_class.generate_heuristic_program(
+                    output = problem_class.generate_heuristic_C_program(
                         "klee",
                         list_of_input_paths_to_exclude=args.input_list_to_exclude,
                         num_klee_inputs=args.max_num_scalable_klee_inputs,
@@ -709,7 +709,7 @@ if __name__ == "__main__":
             assert args.path_to_assigned_fixed_points is not None, "Path to the file that contains the fixed points is not provided"
             if not DISABLE_FILE_REMOVAL and os.path.exists(args.save_name):
                 os.remove(args.save_name)
-            output = problem_class.generate_heuristic_program(
+            output = problem_class.generate_heuristic_C_program(
                 "klee",
                 list_of_input_paths_to_exclude=args.input_list_to_exclude,
                 num_klee_inputs=args.max_num_scalable_klee_inputs,
@@ -741,7 +741,7 @@ if __name__ == "__main__":
                 print(f"XXXX num items {problem_class.num_items}, Min num bins: {range_start}, Max num bins: {range_end}")
                 for num_bins in range(range_start, range_end):
                     print(f"Num bins: {num_bins}")
-                    output = problem_class.generate_heuristic_program(
+                    output = problem_class.generate_heuristic_C_program(
                         "klee",
                         list_of_input_paths_to_exclude=args.input_list_to_exclude,
                         num_klee_inputs=args.max_num_scalable_klee_inputs,
@@ -753,7 +753,7 @@ if __name__ == "__main__":
                         "klee-last", fixed_points=output["fixed_points"], append_mode=True
                     )
             else:
-                output = problem_class.generate_heuristic_program(
+                output = problem_class.generate_heuristic_C_program(
                     "klee",
                     list_of_input_paths_to_exclude=args.input_list_to_exclude,
                     num_klee_inputs=args.max_num_scalable_klee_inputs,
@@ -765,7 +765,7 @@ if __name__ == "__main__":
                 )
         elif args.task not in INPUT_SEEKING_TASKS:
             runner.run_klee_from_string(
-                problem_class.generate_heuristic_program(
+                problem_class.generate_heuristic_C_program(
                     "klee", list_of_input_paths_to_exclude=args.input_list_to_exclude, num_klee_inputs=None
                 )["program"]
             )

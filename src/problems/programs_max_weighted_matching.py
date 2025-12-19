@@ -387,7 +387,7 @@ class MWMProblem(Problem):
         """
         return program
 
-    def generate_heuristic_program(
+    def generate_heuristic_C_program(
         self, program_type, list_of_input_paths_to_exclude=[], path_to_assigned_fixed_points=None, num_klee_inputs=None
     ):
         num_nodes = self.problem_config["num_nodes"]

@@ -541,7 +541,6 @@ def get_bin_packing_common_header(num_items, bin_capacity=100, num_dimensions=1)
 
     return common_header
 
-# TODO: the "all_klee_var_names" requirements for registering a heuristic are a bit concerning to me, as in MetaEase is not as "touch-free as we claim it to be." In our meeting lets go through all the requirements when someone wants to register a heuristic/problem and see if there are ways we can address these a bit better.
 class VBPProblem(Problem):
     def __init__(self, problem_config_path):
         super().__init__(problem_config_path)
@@ -741,7 +740,7 @@ class VBPProblem(Problem):
         bin_size = args_dict["bin_size"]
         return get_bin_packing_common_header(num_items, bin_size, num_dimensions)
 
-    def generate_heuristic_program(
+    def generate_heuristic_C_program(
         self,
         program_type,
         list_of_input_paths_to_exclude=[],

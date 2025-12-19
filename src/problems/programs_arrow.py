@@ -2656,7 +2656,7 @@ class ArrowProblem(Problem):
 
         return program
 
-    def generate_heuristic_program(
+    def generate_heuristic_C_program(
         self,
         program_type,
         list_of_input_paths_to_exclude=[],

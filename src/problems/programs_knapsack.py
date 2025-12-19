@@ -606,7 +606,7 @@ class KnapsackProblem(Problem):
 
         return get_common_header(num_items, capacity, max_value)
 
-    def generate_heuristic_program(
+    def generate_heuristic_C_program(
         self, program_type, list_of_input_paths_to_exclude=[], num_klee_inputs=None, path_to_assigned_fixed_points=None
     ):
         num_items = self.problem_config["num_items"]

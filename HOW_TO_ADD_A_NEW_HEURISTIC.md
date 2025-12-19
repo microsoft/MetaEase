@@ -197,12 +197,12 @@ def get_problem_description(args) -> dict:
 
 ### Step 4: Implement KLEE Program Generation (Optional but Recommended)
 
-If you want MetaEase to use KLEE symbolic execution for your heuristic, implement KLEE program generation in the `generate_heuristic_program()` method.
+If you want MetaEase to use KLEE symbolic execution for your heuristic, implement KLEE program generation in the `generate_heuristic_C_program()` method.
 
 **Example: Adding KLEE support for "MyNewHeuristic" in TE**
 
 ```python
-def generate_heuristic_program(
+def generate_heuristic_C_program(
     self,
     program_type,
     list_of_input_paths_to_exclude=[],
@@ -320,7 +320,7 @@ See how DOTE was added to TE problems:
 See how FFD was added to Vector Bin Packing:
 - Heuristic function: `first_fit_decreasing()` in `src/problems/programs_vbp.py`
 - Selection logic: Added in `VBPProblem.compute_heuristic_value()`
-- KLEE program: Implemented in `VBPProblem.generate_heuristic_program()`
+- KLEE program: Implemented in `VBPProblem.generate_heuristic_C_program()`
 
 ## Common Pitfalls
 

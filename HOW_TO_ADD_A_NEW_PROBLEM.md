@@ -226,22 +226,6 @@ def get_thresholds(self, relaxed_all_vars):
     return thresholds
 ```
 
-#### 2.8 `is_input_feasible(input_dict)`
-
-Checks if an input satisfies problem constraints.
-
-**Example:**
-```python
-def is_input_feasible(self, input_dict):
-    # Check if the input satisfies all constraints
-    # For knapsack, we might check if weights are positive, etc.
-    for i in range(self.num_items):
-        if input_dict[f"weight_{i}"] < 0:
-            return False
-        if input_dict[f"value_{i}"] < 0:
-            return False
-    return True
-```
 
 #### 2.9 `get_decision_to_input_map(all_vars)`
 
@@ -298,7 +282,7 @@ def get_common_header(self, args_dict=None):
     return header
 ```
 
-#### 2.11 `generate_heuristic_program(program_type, list_of_input_paths_to_exclude=[], num_klee_inputs=None, path_to_assigned_fixed_points=None)`
+#### 2.11 `generate_heuristic_C_program(program_type, list_of_input_paths_to_exclude=[], num_klee_inputs=None, path_to_assigned_fixed_points=None)`
 
 Generates the complete C program for KLEE symbolic execution. This is the most complex method and is critical for MetaEase's path-aware optimization.
 
@@ -310,7 +294,7 @@ Generates the complete C program for KLEE symbolic execution. This is the most c
 
 **Example (Knapsack):**
 ```python
-def generate_heuristic_program(
+def generate_heuristic_C_program(
     self, 
     program_type, 
     list_of_input_paths_to_exclude=[],
@@ -564,7 +548,6 @@ from problems.programs_your_problem import *
 
 4. **Variable naming:** Use consistent naming conventions for input variables (e.g., `value_{i}`, `weight_{i}`) that match between Python and C code.
 
-5. **Feasibility checking:** Implement proper constraint checking in `is_input_feasible()`.
 
 ## Example: Complete Knapsack Problem
 
