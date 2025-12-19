@@ -374,6 +374,13 @@ The plotting helper for ablations is `scripts/plot_ablation.py`. It can generate
 
    For example, if `Problem = "Seed"`, the plots will be under `ablation_plots_Seed/`.
 
+## Extending MetaEase
+
+Want to add your own problem or heuristic? See our guides:
+- **[HOW_TO_ADD_A_NEW_PROBLEM.md](HOW_TO_ADD_A_NEW_PROBLEM.md)**: Step-by-step guide for adding a completely new problem type (e.g., VBP, Knapsack)
+- **[HOW_TO_ADD_A_NEW_HEURISTIC.md](HOW_TO_ADD_A_NEW_HEURISTIC.md)**: Guide for adding a new heuristic to an existing problem (e.g., DemandPinning, DOTE)
+
+
 # Citation
 If you use this code in your research, please cite our paper:
 ```bibtex

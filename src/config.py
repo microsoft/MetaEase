@@ -40,8 +40,7 @@ def load_topology_info(topology_name):
 
     return topology_data
 
-# TODO: it seems some of our heuristics are missing here? Dote? also, I think once more I see the importance of in the main readme describing how a user can analyze (1) a new heuristic (2) a new problem class (3) a new problem instance. And describe what
-# changes they need to make to the code to do so.
+
 PROBLEM_CONFIGS = {
     "vbp": {
         "num_items": 20,
@@ -97,7 +96,8 @@ COMMON_PARAMETERS = {
     "max_time_per_klee_point": None, # The maximum time to run gradient ascent on a klee point
     "max_total_time": None, # The maximum total time to run MetaEase
 }
-# TODO: could use a comment on what these are.
+
+# The following parameters are used to set the min and max values for the klee variables.
 PARAMETERS = {
     "vbp": {
         "min_value": 0.0,

@@ -2677,7 +2677,7 @@ class ArrowProblem(Problem):
             topology->edge_count = 0;
         }
 
-        // Simple TE optimization solver (simplified version of optimal_TE_standalone_optimized)
+        // Simple TE optimization solver (simplified version of optimal_TE)
         int solve_te_optimization(Topology* topology, Demand* demands, int demand_count) {
             int total_flow = 0;
             

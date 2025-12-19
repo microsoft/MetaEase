@@ -3,7 +3,6 @@ import json
 import random
 import time
 import sys
-import os
 # Add parent directory to path for utils and common
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import *
@@ -11,17 +10,12 @@ from ortools.linear_solver import pywraplp
 from collections import defaultdict
 from .problem import Problem
 from common import LAMBDA_MAX_VALUE
-from ortools.linear_solver import pywraplp
-import os
 import numpy as np
 import subprocess
 import re
 import shutil
-import time
-import random
 # TODO: many parameters are the same across problem types, should have defaults and only override what is different.
 # TODO: rename get_heuristic_program to get_heuristic_C_program. and explain in a comment why the existance of these functions is necessary.
-# TODO: there are a bunch of duplicate imports in the code.
 # TODO: relative paths you have strewn about everywhere are a bit risky, better to fix with respect to base directory of MetaEase.
 # TODO: remove all the print statements you had added for debugging/remove all the comments of that too.
 # TODO: line 176-181 -- you can cache the edge to path mapping once to avoid recommputing it often.
@@ -29,8 +23,18 @@ import random
 ENABLE_PRINT = False
 DISABLE_CUSTOMIZATION = False
 
-# TODO: put a comment as to what this function is doing and what its inputs are and where it is used.
+
 def find_all_paths(problem_config, source, destination, max_num_paths=float("inf")):
+    """
+    Finds all paths from a source to a destination in a graph.
+    Args:
+        problem_config: A dictionary containing the problem configuration (e.g. number of nodes, edges, etc.)
+        source: The source node.
+        destination: The destination node.
+        max_num_paths: The maximum number of paths to find (default is infinity).
+    Returns:
+        A list of paths from the source to the destination.
+    """ 
     # Build adjacency list from the graph dictionary
     adjacency_list = defaultdict(list)
     graph = {key: value for key, value in problem_config.items() if "edge_" in key}
@@ -70,7 +74,7 @@ def get_min_capacity_on_path(path, edges):
         min_capacity = min(min_capacity, edges[edge])
     return min_capacity
 
-# TODO: describe the function, what it does and how it is used and where.
+# This function finds all possible demands for a given problem configuration.
 def find_possible_demands(problem_config):
     import concurrent.futures
     import os
@@ -1356,328 +1360,6 @@ class TEProblem(Problem):
         end_time = time.time()
         print(f"Total _precompute_static_data took {end_time - start_time:.4f} seconds")
 
-    def _optimal_TE_original(self, demands):
-        start_time = time.time()
-        # print(f"Starting _optimal_TE_original with {len(demands)} demands")
-
-        if not hasattr(self, "static_path_info"):
-            raise Exception(
-                "Static data not precomputed. Call _precompute_static_data first!"
-            )
-
-        # Create a new solver for this optimization
-        solver = pywraplp.Solver.CreateSolver("GLOP")
-        if not solver:
-            raise Exception("Solver could not be created!")
-
-        all_paths = self.static_all_paths
-
-        # Create demand-dependent variables and constraints
-        demand_vars_start = time.time()
-        all_vars = {}
-        flow_pair_vars = {}
-        flowpath_constraints = {}
-        flow_demand_constraints = {}
-        flow_on_path_vars = {}
-
-        # Add demand values to all_vars
-        for from_, to_ in demands:
-            all_vars[f"demand_{from_}_{to_}"] = demands[(from_, to_)]
-
-        # Create flow path variables using precomputed info
-        for from_, to_ in all_paths:
-            if (from_, to_) in self.static_path_info:
-                for path_info in self.static_path_info[(from_, to_)]:
-                    var_name = path_info["var_name"]
-                    max_capacity = path_info["max_capacity"]
-                    flow_on_path_vars[var_name] = solver.NumVar(
-                        0, max_capacity, var_name
-                    )
-
-        # Create flow variables and constraints for each demand
-        for from_, to_ in demands:
-            if (from_, to_) in self.possible_demands:
-                flow_pair_vars[f"aux_flow_{from_}_{to_}"] = solver.NumVar(
-                    0, 2 * demands[(from_, to_)], f"aux_flow_{from_}_{to_}"
-                )
-                flow_demand_constraints[(from_, to_)] = solver.Add(
-                    flow_pair_vars[f"aux_flow_{from_}_{to_}"] <= demands[(from_, to_)]
-                )
-
-                # Connect flow to path variables
-                if (from_, to_) in self.static_path_info:
-                    path_vars = []
-                    for path_info in self.static_path_info[(from_, to_)]:
-                        var_name = path_info["var_name"]
-                        path_vars.append(flow_on_path_vars[var_name])
-
-                    if path_vars:
-                        sum_flow_on_paths = solver.Sum(path_vars)
-                        constraint = solver.Add(
-                            flow_pair_vars[f"aux_flow_{from_}_{to_}"]
-                            == sum_flow_on_paths
-                        )
-                        flowpath_constraints[(from_, to_)] = constraint
-
-        # Create capacity constraints using precomputed info
-        capacity_constraints = {}
-        for edge_key, constraint_info in self.static_capacity_constraints_info.items():
-            capacity = constraint_info["capacity"]
-            path_vars = [
-                flow_on_path_vars[path]
-                for path in constraint_info["paths"]
-                if path in flow_on_path_vars
-            ]
-            if path_vars:
-                constraint = solver.Add(solver.Sum(path_vars) <= capacity)
-                capacity_constraints[edge_key] = constraint
-
-        demand_vars_end = time.time()
-        if ENABLE_PRINT:
-            print(
-                f"Demand-dependent variable creation took {demand_vars_end - demand_vars_start:.4f} seconds"
-            )
-
-        # Set up objective (maximize total flow)
-        objective_start = time.time()
-        total_flow = solver.Sum(flow_pair_vars.values())
-        solver.Maximize(total_flow)
-        objective_end = time.time()
-        if ENABLE_PRINT:
-            print(f"Objective setup took {objective_end - objective_start:.4f} seconds")
-
-        # Solve the problem
-        solve_start = time.time()
-        status = solver.Solve()
-        if status != pywraplp.Solver.OPTIMAL:
-            raise Exception("Solver did not find an optimal solution!")
-        solve_end = time.time()
-        if ENABLE_PRINT:
-            print(f"Solver execution took {solve_end - solve_start:.4f} seconds")
-
-        # Extract results
-        extraction_start = time.time()
-        flow_values = {
-            edge: flow_pair_vars[edge].solution_value() for edge in flow_pair_vars
-        }
-        flowpath_values = {
-            path: flow_on_path_vars[path].solution_value() for path in flow_on_path_vars
-        }
-
-        # Store all variable values
-        for key in flow_pair_vars:
-            all_vars[key] = flow_pair_vars[key].solution_value()
-
-        for key in flow_on_path_vars:
-            all_vars[key] = flow_on_path_vars[key].solution_value()
-
-        # Extract dual values for constraints
-        for key in flow_demand_constraints:
-            all_vars[f"lambda_flow_demand_{key[0]}_{key[1]}"] = flow_demand_constraints[
-                key
-            ].dual_value()
-
-        for key in flowpath_constraints:
-            all_vars[f"lambda_flowpath_{key[0]}_{key[1]}"] = flowpath_constraints[
-                key
-            ].dual_value()
-
-        for key in capacity_constraints:
-            all_vars[f"lambda_capacity_{key}"] = capacity_constraints[key].dual_value()
-
-        total_flow_value = total_flow.solution_value()
-        extraction_end = time.time()
-        if ENABLE_PRINT:
-            print(f"Result extraction took {extraction_end - extraction_start:.4f} seconds")
-
-        end_time = time.time()
-        if ENABLE_PRINT:
-            print(
-                f"Total _optimal_TE_original execution took {end_time - start_time:.4f} seconds"
-            )
-
-        return {
-            "flow_values": flow_values,
-            "flowpath_values": flowpath_values,
-            "optimal_total_flow": total_flow_value,
-            "all_vars": all_vars,
-        }
-   # TODO: I see multiple instances of optimal TE, what is each one, why are there multiple? If there is a good reason to have many, add comments to differentiate them.
-   # On a similar note, I saw that you have both old version and new version of different functions, always keep the new version and delete all old code in public releases: old code is liability especially since you wont be maintaining it.
-    def optimal_TE(
-        self, num_nodes, edges, demands, possible_demands=None, given_all_paths=None
-    ):
-        # Check if we can use the optimized version with precomputed static data
-        if hasattr(self, "static_path_info") and self.static_path_info is not None:
-            if ENABLE_PRINT:
-                print(f"Using optimized _optimal_TE_original with precomputed static data")
-            return self._optimal_TE_original(demands)
-
-        # Fall back to original implementation if static data not available
-        start_time = time.time()
-        # print(f"Starting optimal_TE with {num_nodes} nodes, {len(demands)} demands")
-
-        # Create the solver
-        solver_start = time.time()
-        solver = pywraplp.Solver.CreateSolver("GLOP")
-        if not solver:
-            raise Exception("Solver could not be created!")
-        solver_end = time.time()
-        if ENABLE_PRINT:
-            print(f"Solver creation took {solver_end - solver_start:.4f} seconds")
-
-        all_vars = {}
-        flow_on_path_vars = {}
-        all_paths = given_all_paths if given_all_paths is not None else {}
-        nodes = range(num_nodes)
-
-        # Variable creation phase
-        var_creation_start = time.time()
-        for from_ in nodes:
-            for to_ in nodes:
-                if from_ != to_:
-                    if (from_, to_) in all_paths:
-                        paths = all_paths[(from_, to_)]
-                    else:
-                        paths = find_all_paths(
-                            {"num_nodes": num_nodes, **edges}, str(from_), str(to_)
-                        )
-                        all_paths[(from_, to_)] = paths
-                    for path in paths:
-                        path_string = "_".join(path)
-                        var_name = f"aux_flowpath_{path_string}"
-                        min_capacity_on_path = get_min_capacity_on_path(path, edges)
-                        flow_on_path_vars[var_name] = solver.NumVar(
-                            0, min_capacity_on_path, var_name
-                        )
-        var_creation_end = time.time()
-        if ENABLE_PRINT:
-            print(
-                f"Variable creation took {var_creation_end - var_creation_start:.4f} seconds"
-            )
-
-        # Create flow variables for
-        if possible_demands is None:
-            possible_demands, _ = find_possible_demands(
-                {"num_nodes": num_nodes, **edges}
-            )
-        for from_, to_ in demands:
-            if (from_, to_) in possible_demands:
-                all_vars[f"demand_{from_}_{to_}"] = demands[(from_, to_)]
-        flow_pair_vars = {}
-        flowpath_constraints = {}
-        flow_demand_constraints = {}
-
-        # Constraint creation phase
-        constraint_creation_start = time.time()
-        for from_, to_ in possible_demands:
-            if (from_, to_) in demands:
-                flow_pair_vars[f"aux_flow_{from_}_{to_}"] = solver.NumVar(
-                    0, 2 * demands[(from_, to_)], f"aux_flow_{from_}_{to_}"
-                )
-                flow_demand_constraints[(from_, to_)] = solver.Add(
-                    flow_pair_vars[f"aux_flow_{from_}_{to_}"] <= demands[(from_, to_)]
-                )
-                # the aux_flow_{from_}_{to_} is equal to the sum of the flow on all paths from from_ to to_
-                paths = all_paths[(from_, to_)]
-                path_names = ["_".join(path) for path in paths]
-                sum_flow_on_paths = solver.Sum(
-                    flow_on_path_vars[f"aux_flowpath_{path_name}"]
-                    for path_name in path_names
-                )
-                constraint = solver.Add(
-                    flow_pair_vars[f"aux_flow_{from_}_{to_}"] == sum_flow_on_paths
-                )
-                flowpath_constraints[(from_, to_)] = constraint
-
-        capacity_constraints = {}
-        # Add capacity constraints for each edge
-        for from_ in nodes:
-            for to_ in nodes:
-                if from_ != to_:
-                    edge = f"edge_{from_}_{to_}"
-                    if edge in edges:
-                        capacity = edges[edge]
-                        # find all the paths that use this edge
-                        every_path = []
-                        for key, value in all_paths.items():
-                            every_path.extend("_".join(path) for path in value)
-                        paths_with_this_edge = [
-                            path for path in every_path if f"{from_}_{to_}" in path
-                        ]
-                        constraint = solver.Add(
-                            solver.Sum(
-                                flow_on_path_vars[f"aux_flowpath_{path}"]
-                                for path in paths_with_this_edge
-                            )
-                            <= capacity
-                        )
-                        capacity_constraints[f"{from_}_{to_}"] = constraint
-        constraint_creation_end = time.time()
-        if ENABLE_PRINT:
-            print(
-                f"Constraint creation took {constraint_creation_end - constraint_creation_start:.4f} seconds"
-            )
-
-        # Objective: Maximize the total flow
-        objective_start = time.time()
-        total_flow = solver.Sum(flow_pair_vars.values())
-        solver.Maximize(total_flow)
-        objective_end = time.time()
-        if ENABLE_PRINT:
-            print(f"Objective setup took {objective_end - objective_start:.4f} seconds")
-
-        # Solve the problem
-        solve_start = time.time()
-        status = solver.Solve()
-        if status != pywraplp.Solver.OPTIMAL:
-            raise Exception("Solver did not find an optimal solution!")
-        solve_end = time.time()
-        if ENABLE_PRINT:
-            print(f"Solver execution took {solve_end - solve_start:.4f} seconds")
-
-        # Extract results
-        extraction_start = time.time()
-        flow_values = {
-            edge: flow_pair_vars[edge].solution_value() for edge in flow_pair_vars
-        }
-        flowpath_values = {
-            path: flow_on_path_vars[path].solution_value() for path in flow_on_path_vars
-        }
-        for key in flow_pair_vars:
-            all_vars[key] = flow_pair_vars[key].solution_value()
-
-        for key in flow_on_path_vars:
-            all_vars[key] = flow_on_path_vars[key].solution_value()
-
-        for key in flow_demand_constraints:
-            all_vars[f"lambda_flow_demand_{key[0]}_{key[1]}"] = flow_demand_constraints[
-                key
-            ].dual_value()
-
-        for key in flowpath_constraints:
-            all_vars[f"lambda_flowpath_{key[0]}_{key[1]}"] = flowpath_constraints[
-                key
-            ].dual_value()
-
-        for key in capacity_constraints:
-            all_vars[f"lambda_capacity_{key}"] = capacity_constraints[key].dual_value()
-
-        total_flow_value = total_flow.solution_value()
-        extraction_end = time.time()
-        if ENABLE_PRINT:
-            print(f"Result extraction took {extraction_end - extraction_start:.4f} seconds")
-
-        end_time = time.time()
-        if ENABLE_PRINT:
-            print(f"Total optimal_TE execution took {end_time - start_time:.4f} seconds")
-
-        return {
-            "flow_values": flow_values,
-            "flowpath_values": flowpath_values,
-            "optimal_total_flow": total_flow_value,
-            "all_vars": all_vars,
-        }
 
     def reset_solver(self):
         """Reset the solver state by recreating the static solver components"""
@@ -2879,176 +2561,6 @@ class TimingTracker:
         print("=====================\n")
 
 
-# Global timing tracker instance
-timing_tracker = TimingTracker()
-def optimal_TE_standalone(
-    num_nodes, edges, demands, possible_demands=None, given_all_paths=None
-):
-    """
-    Standalone version of optimal_TE for use by demand_pinning_TE and pop_TE functions.
-    This is the original implementation without the optimization.
-    """
-    start_time = time.time()
-    # print(f"Starting optimal_TE_standalone with {num_nodes} nodes, {len(demands)} demands")
-
-    # Create the solver
-    solver_start = time.time()
-    solver = pywraplp.Solver.CreateSolver("GLOP")
-    if not solver:
-        raise Exception("Solver could not be created!")
-    solver_end = time.time()
-    if ENABLE_PRINT:
-        print(f"Solver creation took {solver_end - solver_start:.4f} seconds")
-
-    all_vars = {}
-    flow_on_path_vars = {}
-    all_paths = given_all_paths if given_all_paths is not None else {}
-    nodes = range(num_nodes)
-
-    # Variable creation phase
-    var_creation_start = time.time()
-    for from_ in nodes:
-        for to_ in nodes:
-            if from_ != to_:
-                if (from_, to_) in all_paths:
-                    paths = all_paths[(from_, to_)]
-                else:
-                    paths = find_all_paths(
-                        {"num_nodes": num_nodes, **edges}, str(from_), str(to_)
-                    )
-                    all_paths[(from_, to_)] = paths
-                for path in paths:
-                    path_string = "_".join(path)
-                    var_name = f"aux_flowpath_{path_string}"
-                    min_capacity_on_path = get_min_capacity_on_path(path, edges)
-                    flow_on_path_vars[var_name] = solver.NumVar(
-                        0, min_capacity_on_path, var_name
-                    )
-    var_creation_end = time.time()
-    # print(f"Variable creation took {var_creation_end - var_creation_start:.4f} seconds")
-
-    # Create flow variables for
-    if possible_demands is None:
-        possible_demands, _ = find_possible_demands({"num_nodes": num_nodes, **edges})
-    for from_, to_ in demands:
-        if (from_, to_) in possible_demands:
-            all_vars[f"demand_{from_}_{to_}"] = demands[(from_, to_)]
-    flow_pair_vars = {}
-    flowpath_constraints = {}
-    flow_demand_constraints = {}
-
-    # Constraint creation phase
-    constraint_creation_start = time.time()
-    for from_, to_ in possible_demands:
-        if (from_, to_) in demands:
-            flow_pair_vars[f"aux_flow_{from_}_{to_}"] = solver.NumVar(
-                0, 2 * demands[(from_, to_)], f"aux_flow_{from_}_{to_}"
-            )
-            flow_demand_constraints[(from_, to_)] = solver.Add(
-                flow_pair_vars[f"aux_flow_{from_}_{to_}"] <= demands[(from_, to_)]
-            )
-            # the aux_flow_{from_}_{to_} is equal to the sum of the flow on all paths from from_ to to_
-            paths = all_paths[(from_, to_)]
-            path_names = ["_".join(path) for path in paths]
-            sum_flow_on_paths = solver.Sum(
-                flow_on_path_vars[f"aux_flowpath_{path_name}"]
-                for path_name in path_names
-            )
-            constraint = solver.Add(
-                flow_pair_vars[f"aux_flow_{from_}_{to_}"] == sum_flow_on_paths
-            )
-            flowpath_constraints[(from_, to_)] = constraint
-
-    capacity_constraints = {}
-    # Add capacity constraints for each edge
-    for from_ in nodes:
-        for to_ in nodes:
-            if from_ != to_:
-                edge = f"edge_{from_}_{to_}"
-                if edge in edges:
-                    capacity = edges[edge]
-                    # find all the paths that use this edge
-                    every_path = []
-                    for key, value in all_paths.items():
-                        every_path.extend("_".join(path) for path in value)
-                    paths_with_this_edge = [
-                        path for path in every_path if f"{from_}_{to_}" in path
-                    ]
-                    constraint = solver.Add(
-                        solver.Sum(
-                            flow_on_path_vars[f"aux_flowpath_{path}"]
-                            for path in paths_with_this_edge
-                        )
-                        <= capacity
-                    )
-                    capacity_constraints[f"{from_}_{to_}"] = constraint
-    constraint_creation_end = time.time()
-    if ENABLE_PRINT:
-        print(
-            f"Constraint creation took {constraint_creation_end - constraint_creation_start:.4f} seconds"
-        )
-
-    # Objective: Maximize the total flow
-    objective_start = time.time()
-    total_flow = solver.Sum(flow_pair_vars.values())
-    solver.Maximize(total_flow)
-    objective_end = time.time()
-    if ENABLE_PRINT:
-        print(f"Objective setup took {objective_end - objective_start:.4f} seconds")
-
-    # Solve the problem
-    solve_start = time.time()
-    status = solver.Solve()
-    if status != pywraplp.Solver.OPTIMAL:
-        raise Exception("Solver did not find an optimal solution!")
-    solve_end = time.time()
-    if ENABLE_PRINT:
-        print(f"Solver execution took {solve_end - solve_start:.4f} seconds")
-
-    # Extract results
-    extraction_start = time.time()
-    flow_values = {
-        edge: flow_pair_vars[edge].solution_value() for edge in flow_pair_vars
-    }
-    flowpath_values = {
-        path: flow_on_path_vars[path].solution_value() for path in flow_on_path_vars
-    }
-    for key in flow_pair_vars:
-        all_vars[key] = flow_pair_vars[key].solution_value()
-
-    for key in flow_on_path_vars:
-        all_vars[key] = flow_on_path_vars[key].solution_value()
-
-    for key in flow_demand_constraints:
-        all_vars[f"lambda_flow_demand_{key[0]}_{key[1]}"] = flow_demand_constraints[
-            key
-        ].dual_value()
-
-    for key in flowpath_constraints:
-        all_vars[f"lambda_flowpath_{key[0]}_{key[1]}"] = flowpath_constraints[
-            key
-        ].dual_value()
-
-    for key in capacity_constraints:
-        all_vars[f"lambda_capacity_{key}"] = capacity_constraints[key].dual_value()
-
-    total_flow_value = total_flow.solution_value()
-    extraction_end = time.time()
-    if ENABLE_PRINT:
-        print(f"Result extraction took {extraction_end - extraction_start:.4f} seconds")
-
-    end_time = time.time()
-    if ENABLE_PRINT:
-        print(
-        f"Total optimal_TE_standalone execution took {end_time - start_time:.4f} seconds"
-    )
-
-    return {
-        "flow_values": flow_values,
-        "flowpath_values": flowpath_values,
-        "optimal_total_flow": total_flow_value,
-        "all_vars": all_vars,
-    }
 
 def get_TE_lagrangian_gradient_wrapper(
     num_nodes, edges, input_dict, given_all_paths=None, use_optimized=True
