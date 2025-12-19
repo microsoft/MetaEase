@@ -123,7 +123,7 @@ def get_problem_description(args) -> dict:
             problem_description["num_samples"] = 20
             problem_description["num_iterations"] = 1000
             problem_description["disable_gradient_ascent"] = True
-            problem_description["disable_guassian_process"] = True
+            problem_description["disable_gaussian_process"] = True
             # problem_description["max_num_scalable_klee_inputs"] = 1000000000
             # problem_description["randomized_gradient_ascent"] = True
             # problem_description["num_vars_in_randomized_gradient_ascent"] = 1000000000
@@ -134,7 +134,7 @@ def get_problem_description(args) -> dict:
             problem_description["num_samples"] = 20
             problem_description["num_iterations"] = 1000
             problem_description["disable_gradient_ascent"] = False
-            problem_description["disable_guassian_process"] = False
+            problem_description["disable_gaussian_process"] = False
             problem_description["max_num_scalable_klee_inputs"] = 1000000000
             problem_description["max_num_klee_points_per_iteration"] = 1
             problem_description["use_MetaOpt_cluster"] = False
@@ -151,11 +151,11 @@ def get_problem_description(args) -> dict:
             problem_description["max_num_klee_points_per_iteration"] = 1
             problem_description["randomized_gradient_ascent"] = True
             problem_description["num_vars_in_randomized_gradient_ascent"] = 10
-            problem_description["disable_guassian_process"] = True
+            problem_description["disable_gaussian_process"] = True
             problem_description["num_samples"] = 1
         elif heuristic_name == "DOTE":
             problem_description["num_samples"] = 20
-            problem_description["disable_guassian_process"] = False
+            problem_description["disable_gaussian_process"] = False
             problem_description["disable_klee"] = False
             problem_description["disable_gradient_ascent"] = False
             problem_description["num_random_seed_samples"] = 20
@@ -182,8 +182,8 @@ def get_problem_description(args) -> dict:
             "num_scenarios": 3,
             "gradient_ascent_rate": 1.0,
             "num_non_zero_rounds": 1,
-            "num_samples": 40, # this is used for guassian process
-            "disable_guassian_process": True, # this is used for direct derivative
+            "num_samples": 40, # this is used for gaussian process
+            "disable_gaussian_process": True, # this is used for direct derivative
             "randomized_gradient_ascent": True,
             "num_vars_in_randomized_gradient_ascent": 10,
             "max_time_per_klee_point": None,
@@ -211,8 +211,8 @@ def get_problem_description(args) -> dict:
             "num_items": num_items,
             "num_dimensions": num_dimensions,
             "max_num_scalable_klee_inputs": 1000,
-            "num_samples": 50, # this is used for guassian process
-            "disable_guassian_process": False, # this is used for direct derivative
+            "num_samples": 50, # this is used for gaussian process
+            "disable_gaussian_process": False, # this is used for direct derivative
             "max_time_per_klee_point": None,
             "block_length": 1.0,
             "gradient_ascent_rate": 1.0,
@@ -244,7 +244,7 @@ def get_problem_description(args) -> dict:
             "gradient_ascent_rate": 1.0,
             "use_gaps_in_filtering": True,
             "remove_zero_gap_inputs": True,
-            "disable_guassian_process": False,
+            "disable_gaussian_process": False,
             "num_non_zero_rounds": 5,
             "disable_gradient_ascent": False,
             "num_samples": 50,
@@ -262,7 +262,7 @@ def get_problem_description(args) -> dict:
             "remove_zero_gap_inputs": True,
             "max_weight": 10,
             "disable_gradient_ascent": False,
-            "disable_guassian_process": True,
+            "disable_gaussian_process": True,
             "randomized_gradient_ascent": True,
             "num_vars_in_randomized_gradient_ascent": 10,
             "keep_redundant_code_paths": True,

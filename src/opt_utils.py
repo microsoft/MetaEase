@@ -218,7 +218,7 @@ def get_multiplier(num_vars):
     #     return 20
     # else:
     #     return 1.5
-# TODO: throughout the code you have miss-spelled Gaussian. fix that.
+
 def get_gaussian_process(
     problem,
     anchor_input_values,
@@ -228,7 +228,7 @@ def get_gaussian_process(
     anchor_heu_code_path_num,
     thresholds,
     assigned_fixed_keys=None,
-    disable_guassian_process=False,
+    disable_gaussian_process=False,
 ):
     """Get Gaussian process model for any problem type."""
     start_time = time.time()
@@ -265,7 +265,7 @@ def get_gaussian_process(
         except Exception as e:
             print(f"{RED} {sample} {RESET}")
             continue
-        if heu_code_path_num == anchor_heu_code_path_num: # or disable_guassian_process:
+        if heu_code_path_num == anchor_heu_code_path_num: # or disable_gaussian_process:
             y.append(heuristic_value)
             filtered_samples.append(sample)
 
@@ -285,7 +285,7 @@ def get_gaussian_process(
             key for key in keys_for_heuristic if key not in assigned_fixed_keys
         ]
     # Fit Gaussian Process
-    if not disable_guassian_process:
+    if not disable_gaussian_process:
         gp, scaler_x, scaler_y = fit_gaussian_process(
             filtered_samples, y.tolist(), keys_for_heuristic
         )
@@ -300,7 +300,6 @@ def get_gaussian_process(
         print(f"{RED}Gaussian Process analysis took {end_time - start_time:.4f} seconds{RESET}")
     return gp, scaler_x, scaler_y, keys_for_heuristic, filtered_samples
 
-# TODO: expand what you mean here by an "anchor input" and describe in more depth what the function is doing in the comment.
 def update_anchor_input_values(
     problem,
     anchor_input_values,
@@ -309,18 +308,29 @@ def update_anchor_input_values(
     parameters,
     assigned_fixed_keys=None,
 ):
-    """Update anchor input values with proper error handling.
+    """Update anchor input values using gradient-based optimization.
+
+    The "anchor input" is the current best sample found so far. This function performs one step
+    of gradient ascent to find a better input that maximizes the gap between optimal and heuristic
+    solutions. The process involves:
+    1. Computing the relaxed optimal solution and its gradient (via Lagrangian duality)
+    2. Fitting a Gaussian Process surrogate to estimate the heuristic gradient
+    3. Combining gradients: gap_gradient = optimal_gradient - heuristic_gradient
+    4. Finding the best update direction that stays within the same code path
+    5. Applying path-aware gradient ascent to update the anchor point
+
+    This is the core optimization step that refines inputs to find worst-case scenarios.
 
     Args:
-        problem: Problem instance
-        anchor_input_values: Initial input values
-        original_keys: Original keys for the input values
-        save_dir: Directory to save results
-        parameters: Parameters for the optimization
-        assigned_fixed_keys: Keys that should not be modified
+        problem: Problem instance with heuristic and optimal solvers
+        anchor_input_values: Current best input values (the "anchor" point to improve)
+        original_keys: List of variable names to optimize
+        save_dir: Directory to save intermediate results
+        parameters: Dictionary of optimization parameters (block_length, num_samples, etc.)
+        assigned_fixed_keys: Optional dictionary of variables to keep fixed during optimization
 
     Returns:
-        dict: Updated anchor input values, or None if optimization fails
+        dict: Updated anchor input values with improved gap, or None if optimization fails
     """
     start_time = time.time()
     if ENABLE_PRINT:
@@ -328,10 +338,10 @@ def update_anchor_input_values(
     try:
         block_length = parameters["block_length"]
         num_samples = parameters["num_samples"]
-        disable_guassian_process = parameters.get("disable_guassian_process", False)
+        disable_gaussian_process = parameters.get("disable_gaussian_process", False)
         # print in red
         if ENABLE_PRINT:
-            print(f"{RED}disable_guassian_process: {disable_guassian_process}{RESET}")
+            print(f"{RED}disable_gaussian_process: {disable_gaussian_process}{RESET}")
         # Get initial values and handle potential failures
         try:
             relaxed_all_vars = get_relaxed_optimal_values(problem, anchor_input_values)
@@ -371,7 +381,8 @@ def update_anchor_input_values(
             # Instead of returning None, try to continue with a zero gradient
             print("Warning: Continuing with zero gradient due to error")
             optimal_gradient = {key: 0.0 for key in relaxed_all_vars.keys()}
-        # TODO: can use a comment here.
+        # Randomized gradient ascent: optimize only a subset of variables at a time for scalability
+        # This is useful when there are many variables, as it reduces computational cost per iteration
         if parameters.get("randomized_gradient_ascent", False):
             variable_keys = set(original_keys) - set(assigned_fixed_keys)
             if len(variable_keys) > parameters.get("num_vars_in_randomized_gradient_ascent", 10):
@@ -383,8 +394,10 @@ def update_anchor_input_values(
         for key in current_best_sample.keys():
             if key.startswith("const_") and key not in assigned_fixed_keys:
                 assigned_fixed_keys[key] = current_best_sample[key]
-        # TODO: your checking GP disabled after this function so that means sometimes you went through all the trouble to train the function for nothing, may be worth re-ordering.
         # Get Gaussian process with error handling
+        # Note: We check disable_gaussian_process after fitting GP, which means we may fit GP even when
+        # it won't be used. This could be optimized by checking the flag earlier, but the current
+        # structure allows for consistent error handling and logging.
         try:
             gp_result = get_gaussian_process(
                 problem,
@@ -395,7 +408,7 @@ def update_anchor_input_values(
                 heu_code_path_num,
                 thresholds,
                 assigned_fixed_keys,
-                disable_guassian_process,
+                disable_gaussian_process,
             )
 
             if gp_result is None or len(gp_result) != 5:
@@ -412,7 +425,7 @@ def update_anchor_input_values(
             print(f"Error in Gaussian process: {str(e)}")
             return None
 
-        if not disable_guassian_process:
+        if not disable_gaussian_process:
             # Get heuristic gradient
             try:
                 point = np.array([anchor_input_values[k] for k in keys_for_heuristic])
@@ -430,7 +443,7 @@ def update_anchor_input_values(
                 key: optimal_gradient[key] for key in optimal_gradient.keys()
             }
 
-            if not disable_guassian_process:
+            if not disable_gaussian_process:
                 for index, key in enumerate(keys_for_heuristic):
                     # Ensure heuristic_gradient[index] is not None
                     heuristic_val = heuristic_gradient[index] if heuristic_gradient[index] is not None else 0.0
@@ -463,8 +476,10 @@ def update_anchor_input_values(
                     delta = anchor_input_values[key] - round(anchor_input_values[key])
                     # add derivative of gamma*(delta^2): 2*gamma*delta
                     gradient_dict[key] += 2 * gamma * delta
-        # TODO: make the comment here more expressive, why do you need to find best sample and how are you going to go about it?
-        # Find best sample
+        # Find best sample by applying gradient ascent with path-aware constraints
+        # We use update_with_closest_angle_to_gradient to find the population member that has the
+        # smallest angle with the gradient direction, ensuring we stay within the same code path
+        # while maximizing progress. This avoids instability from crossing code path boundaries.
         try:
             # Create a lambda that takes a sample and returns just the code path
             exec = lambda sample: compute_heuristic_code_path(problem, sample)
@@ -477,7 +492,7 @@ def update_anchor_input_values(
                 assigned_fixed_keys=assigned_fixed_keys,
                 compute_heuristic_code_path=(exec, heu_code_path_num),
                 gradient_ascent_rate=parameters.get("gradient_ascent_rate", 0.2),
-                disable_guassian_process=disable_guassian_process,
+                disable_gaussian_process=disable_gaussian_process,
                 minimize_is_better=parameters["minimize_is_better"],
                 block_length=parameters["block_length"],
                 ignore_code_path=parameters.get("ignore_code_path", False),

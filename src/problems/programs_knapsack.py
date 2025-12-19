@@ -98,8 +98,29 @@ def closed_form_relaxed_optimal_knapsack(values, weights, capacity):
         "lambda": lambda_value,
     }
 
-# TODO: needs better documentation for why this function exits, what it is used for and when.
 def knapsack_relaxed_optimal_solution_derivatives(values, weights, capacity):
+    """
+    Compute derivatives of the relaxed knapsack solution with respect to values and weights.
+
+    This function solves the relaxed (fractional) knapsack problem and computes analytical
+    derivatives of the solution components (selected fractions and Lagrange multiplier) with
+    respect to the input values and weights. These derivatives are used for gradient-based
+    optimization in MetaEase.
+
+    The function is used when we need to understand how changes in item values/weights affect
+    the optimal solution, which is essential for gradient ascent optimization.
+
+    Args:
+        values: List of item values
+        weights: List of item weights
+        capacity: Knapsack capacity
+
+    Returns:
+        Dictionary with keys:
+            - selected_fractions: List of fractions selected for each item
+            - lambda_value: Lagrange multiplier (value density of fractional item)
+            - derivatives: Dictionary mapping item index to derivative information
+    """
     # Calculate value densities (value-to-weight ratio) and sort items by density in descending order
     items = list(enumerate(zip(values, weights)))
     items.sort(key=lambda x: x[1][0] / x[1][1], reverse=True)
@@ -158,8 +179,27 @@ def knapsack_relaxed_optimal_solution_derivatives(values, weights, capacity):
         "derivatives": derivatives,
     }
 
-# TODO: documentation needs improvement to discuss the difference between this function and the one before it.
 def get_knapsack_optimal_solution_gradient(input_dict, num_items, capacity):
+    """
+    Compute the gradient of the optimal knapsack solution with respect to value[i] and weight[i].
+
+    This function is similar to knapsack_relaxed_optimal_solution_derivatives, but works with
+    a dictionary input format (as used in the optimization loop) and returns gradients in a
+    format suitable for gradient ascent. The key difference is:
+    - knapsack_relaxed_optimal_solution_derivatives: Returns detailed derivative information
+    - get_knapsack_optimal_solution_gradient: Returns gradients in dictionary format for optimization
+
+    This function is called during gradient ascent to compute how to update input values/weights
+    to maximize the gap between optimal and heuristic solutions.
+
+    Parameters:
+        input_dict: Dictionary with keys like 'value_i' and 'weight_i' for each item, and 'aux_x_i' for fractions.
+        num_items: Number of items in the knapsack.
+        capacity: Total capacity of the knapsack.
+
+    Returns:
+        gradient (dict): Gradients of `aux_x_i` and `lambda` with respect to `value_i` and `weight_i`.
+    """
     """
     Computes the gradient of the optimal knapsack solution with respect to value[i] and weight[i].
 
@@ -266,7 +306,6 @@ def optimal_knapsack(values, weights, capacity):
     total_value = 0
     all_vars = {}
 
-    # write a code that prints the lagrange multipliers values for the solution
     for i in range(len(values)):
         all_vars[f"value_{i}"] = values[i]
         all_vars[f"weight_{i}"] = weights[i]

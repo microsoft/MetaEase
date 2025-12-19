@@ -173,7 +173,7 @@ def get_problem_description(args) -> dict:
             problem_description["num_samples"] = 30
             problem_description["num_iterations"] = 2000
             problem_description["disable_gradient_ascent"] = False
-            problem_description["disable_guassian_process"] = False
+            problem_description["disable_gaussian_process"] = False
             problem_description["max_num_scalable_klee_inputs"] = 16
             # Add any heuristic-specific parameters
             problem_description["my_param1"] = some_value
@@ -190,7 +190,7 @@ def get_problem_description(args) -> dict:
 - `num_samples`: Number of samples for Gaussian Process surrogate
 - `num_iterations`: Number of gradient ascent iterations per KLEE point
 - `disable_gradient_ascent`: Set to `True` to disable gradient-based optimization
-- `disable_guassian_process`: Set to `True` to use direct gradients instead of GP surrogate
+- `disable_gaussian_process`: Set to `True` to use direct gradients instead of GP surrogate
 - `max_num_scalable_klee_inputs`: Maximum number of symbolic variables for KLEE
 - `gradient_ascent_rate`: Learning rate for gradient ascent
 - `block_length`: Size of the block around current best sample

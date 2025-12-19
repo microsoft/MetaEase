@@ -967,9 +967,7 @@ class VBPProblem(Problem):
             return 0;
         }}
         """
-        # print(program)
         return {"program": program, "fixed_points": fixed_points}
-  # TODO: delete commented codes.
     def get_decision_to_input_map(self, all_vars):
         # Create a mapping of decision variables to their corresponding input variables
         decision_to_input_map = {}

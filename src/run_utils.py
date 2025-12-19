@@ -414,9 +414,28 @@ def process_klee_inputs_parallel(
         total_heuristic_calls,
     )
 
-# TODO: this can use better documentation, especially since the parameters matter.
 def filter_single_klee_input(args):
-    """Process a single KLEE input for filtering."""
+    """Process a single KLEE input for filtering.
+
+    This function evaluates a single KLEE-generated input to determine:
+    1. Which code path the heuristic takes for this input
+    2. The gap between optimal and heuristic solutions (if use_gaps_in_filtering is True)
+
+    The results are used to filter KLEE inputs, keeping only those with:
+    - Unique code paths (if keep_redundant_code_paths is False)
+    - Non-zero gaps (if remove_zero_gap_inputs is True)
+    - Large gaps (prioritized when use_gaps_in_filtering is True)
+
+    Args:
+        args: Tuple containing:
+            - klee_input_value: Dictionary of input variable values
+            - problem: Problem instance with heuristic and optimal solvers
+            - use_gaps_in_filtering: If True, compute and return gap values
+            - minimize_is_better: If True, negate gap (for minimization problems)
+
+    Returns:
+        Dictionary with keys: gap, code_path, input_value, heuristic_value, optimal_value, optimal_all_vars
+    """
     klee_input_value, problem, use_gaps_in_filtering, minimize_is_better = args
     args_dict = problem.convert_input_dict_to_args(klee_input_value)
     heuristic_result = problem.compute_heuristic_value(args_dict)
@@ -548,9 +567,35 @@ def filter_klee_inputs(klee_input_values, problem, use_gaps_in_filtering=False, 
 
     return filtered_klee_input_values, gaps, filtered_results
 
-# TODO: the function documentation needs to be more descriptive of what is happening, I saw where this is called and there is not enough context there either.
 def filter_klee_inputs_sequential(klee_input_values, problem, use_gaps_in_filtering=False, minimize_is_better=False, remove_zero_gap_inputs=False, keep_redundant_code_paths=False):
-    """Filter KLEE inputs sequentially with progress tracking."""
+    """Filter KLEE inputs sequentially to select promising starting points for gradient ascent.
+
+    This function processes KLEE-generated inputs one by one to filter out unpromising candidates.
+    It's called when parallel filtering is disabled (disable_sequential_filtering=False) or when
+    we need deterministic processing. The filtering strategy:
+
+    1. Evaluates each input to get its code path and gap (if use_gaps_in_filtering=True)
+    2. Keeps only unique code paths (unless keep_redundant_code_paths=True)
+    3. Removes zero-gap inputs (if remove_zero_gap_inputs=True)
+    4. Prioritizes inputs with larger gaps (if use_gaps_in_filtering=True)
+
+    This filtering is crucial because KLEE can generate many inputs, but we only want to run
+    expensive gradient ascent on the most promising ones.
+
+    Args:
+        klee_input_values: List of input dictionaries from KLEE
+        problem: Problem instance with heuristic and optimal solvers
+        use_gaps_in_filtering: If True, compute gaps and use them for prioritization
+        minimize_is_better: If True, negate gaps (for minimization problems like VBP)
+        remove_zero_gap_inputs: If True, discard inputs where optimal == heuristic
+        keep_redundant_code_paths: If True, keep multiple inputs with same code path
+
+    Returns:
+        Tuple of (filtered_klee_input_values, gaps, filtered_results) where:
+            - filtered_klee_input_values: List of promising input dictionaries
+            - gaps: List of gap values (None if use_gaps_in_filtering=False)
+            - filtered_results: Full results with all metadata
+    """
     print(f"Filtering {len(klee_input_values)} klee inputs sequentially")
 
     total_inputs = len(klee_input_values)
@@ -794,7 +839,6 @@ def maximize_values_for_klee_path(
             )
             logger.log(logger.log_entry("Min gap: None (no valid gaps)"))
         # Log max gap and number of inputs
-        # TODO: throughout your code, remove all commented out code to clean it up.
         logger.log(logger.log_max_gap(initial_max_gap, len(klee_input_values)))
         # logger.log(
         #     logger.log_entry(
@@ -1022,7 +1066,6 @@ def identify_gap_contributing_variables(
 
     return contributing_vars
 
-# TODO: you can add more to the description in this function to describe what is the rational for using this function and how you decide thresholds and why it is useful.
 def handle_fixed_variables(
     cluster_variables,
     fixed_variables,
@@ -1033,7 +1076,41 @@ def handle_fixed_variables(
     problem=None,
     prev_best_input=None,
 ):
-    """Initialize fixed variables with random values from thresholds, considering which variables contribute to the gap."""
+    """Initialize fixed variables for partitioned optimization.
+
+    In partitioned optimization, we optimize one cluster of variables at a time while fixing others.
+    This function determines which variables to fix and what values to assign them. The rationale:
+
+    1. **Why fix variables**: For scalability - optimizing all variables at once is expensive.
+       By partitioning, we optimize subsets sequentially.
+
+    2. **How to choose fixed values**:
+       - If previous best sample exists: Use values from it (warm start)
+       - If variables contributed to gap: Keep them fixed to preserve good decisions
+       - Otherwise: Use random or preferred values
+
+    3. **Thresholds**: Variable bounds (min, max) ensure fixed values stay within valid ranges.
+       These are problem-specific (e.g., demand values in TE, item sizes in VBP).
+
+    This strategy allows MetaEase to scale to large problems while maintaining solution quality.
+
+    Args:
+        cluster_variables: Variables to optimize in current iteration
+        fixed_variables: Variables to keep fixed (not in current cluster)
+        prev_best_sample_path: Path to previous iteration's best sample JSON file
+        already_optimized_vars: Set of variables already optimized in previous iterations
+        parameters: Configuration dictionary with preferred_values, min_value, max_value
+        logger: Logger instance for debugging
+        problem: Optional problem instance for identifying gap-contributing variables
+        prev_best_input: Optional previous best input for gap analysis
+
+    Returns:
+        Tuple of (assigned_fixed_keys, fixed_variables, cluster_variables) where:
+            - assigned_fixed_keys: Dictionary mapping variable names to fixed values
+            - fixed_variables: Updated set of fixed variable names
+            - cluster_variables: Updated set of variables to optimize (may be reduced if
+              some variables are moved to fixed based on gap contribution)
+    """
     assigned_fixed_keys = {}
     original_cluster_variables = cluster_variables.copy()
     if os.path.exists(prev_best_sample_path):

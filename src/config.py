@@ -66,22 +66,22 @@ PROBLEM_CONFIGS = {
 COMMON_PARAMETERS = {
     # Optimization parameters
     "block_length": 0.1, # The size of the block around the current best sample to sample from
-    "num_samples": 50, # The number of samples to generate in each block, this will be multiplied by a multiplier (currently 1.1) to account for the samples that are within the block but with a different code path # TODO: this was not clear.
+    "num_samples": 50, # The number of samples to generate in each block for GP fitting. This is multiplied by a multiplier (currently 1.1) to generate extra samples, which are then filtered to keep only those with the same code path as the anchor point. This ensures we have enough valid samples after filtering.
     "num_iterations": 2000, # The number of iterations to run the gradient ascent for on one klee point
     "gradient_ascent_rate": 0.2, # The learning rate for the gradient ascent, the same rate will be used for all variables
-    "disable_guassian_process": False, # If True, the guassian process will not be used, direct gradient computation will be used (for samples with a lot of variables, up to num_keys_for_gradient=20)
-    "randomized_gradient_ascent": False, # If True, the gradient ascent will be run on randomized inputs, if False, one step gradient ascent is done on all variables at once # TODO: this was not clear. needs a more detailed description.
+    "disable_gaussian_process": False, # If True, the gaussian process will not be used, direct gradient computation will be used (for samples with a lot of variables, up to num_keys_for_gradient=20)
+    "randomized_gradient_ascent": False, # If True, gradient ascent optimizes only a random subset of variables per iteration (num_vars_in_randomized_gradient_ascent). This reduces computational cost for problems with many variables. If False, all variables are updated simultaneously in each gradient step.
     "num_vars_in_randomized_gradient_ascent": 10, # The number of variables to run the gradient ascent on at once
     "disable_klee": False, # If True, the klee will not be run, only the gradient ascent will run on random samples
     "num_random_seed_samples": 30, # When disable_klee is True, the number of random samples to generate for the gradient ascent
-    "freeze_cluster_fixed_keys": True, # If True, the fixed keys will not be updated # TODO: this is not clear and needs more clarified explanation.
+    "freeze_cluster_fixed_keys": True, # If True, variables that are fixed (not in the current cluster being optimized) will remain unchanged throughout gradient ascent. If False, fixed variables may be updated, which can be useful for fine-tuning but may change code paths.
     # Logging parameters
     "relaxed_gap_save_interval": 10, # The interval to save the relaxed gap
     "actual_gap_save_interval": 100, # The interval to save the actual gap
     "save_and_plot_interval": 10, # The interval to save the and plot the results
     "enable_plotting": True, # If True, the results will be plotted
     # Filtering parameters
-    "use_gaps_in_filtering": True, # If True, the gaps will be computed and used to filter the kleesamples # TODO: it would be good to include in this comment "how" they will be used to do so.
+    "use_gaps_in_filtering": True, # If True, gaps (optimal - heuristic) are computed for each KLEE sample and used to filter. Samples are sorted by gap, and we prioritize those with larger gaps. This helps focus optimization on promising starting points.
     "remove_zero_gap_inputs": True, # If True, the klee samples with zero gap will be removed
     "keep_redundant_code_paths": False, # If True, the redundant code paths will be kept, True used mostly for VBP since we want the code-path changes to happen. Due to klee time constraints, two paths can be similar up to a point but then diverge after that, but we see them as inputs generating the same code-paths because it never went all the way
     # Klee parameters
@@ -89,7 +89,7 @@ COMMON_PARAMETERS = {
     "ignore_gap_value_in_num_non_zero_rounds": False,
     "num_non_zero_rounds": 1, # Run one klee setting for at most num_non_zero_rounds round untill you find a non-zero gap, used alonside list_of_input_paths_to_exclude
     "max_num_scalable_klee_inputs": 16, # The maximum number of klee variables
-    "preferred_values": None, # The preferred values for the klee variables, if None, the values will be randomly sampled from the min_value to max_value # TODO: would benefit from guidence on how to set it.
+    "preferred_values": None, # Preferred initial values for KLEE variables. If None, values are randomly sampled from [min_value, max_value]. If provided (e.g., [max_value, small_value]), KLEE will prioritize these values when generating symbolic inputs. Useful for domain-specific knowledge (e.g., in TE problems, prefer max flow and small flow cutoff values).
     # Time budget parameters
     "early_stop": True, # If True, the gradient ascent will stop when the relaxed gap converges based on has_converged function
     "max_num_klee_points_per_iteration": None, # The maximum number of klee points to run in each iteration

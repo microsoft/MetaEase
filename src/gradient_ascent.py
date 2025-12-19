@@ -537,7 +537,6 @@ def normal_gradient_ascent(
         # if the code path is different, return None to indicate that the gradient ascent is not successful
         return None
 
-# TODO: this function needs documentation that explains what we are doing and why.
 def update_with_closest_angle_to_gradient(
     population,
     best_sample,
@@ -547,13 +546,42 @@ def update_with_closest_angle_to_gradient(
     assigned_fixed_keys=None,
     compute_heuristic_code_path: Optional[Tuple[Callable, str]] = None,
     gradient_ascent_rate=0.2,
-    disable_guassian_process=False,
+    disable_gaussian_process=False,
     minimize_is_better=False,
     block_length=0.1,
     ignore_code_path=False,
     early_stop=False
 ):
-    if compute_heuristic_code_path is not None and disable_guassian_process:
+    """
+    Update the best sample by finding the population member with the closest angle to the gradient direction.
+
+    This function implements path-aware gradient ascent. Instead of directly following the gradient (which
+    might cross code path boundaries and cause instability), we find the sample in the population that
+    has the smallest angle with the gradient direction. This ensures we stay within the same code path
+    while still making progress toward maximizing the gap.
+
+    The angle between two vectors is computed using the dot product formula:
+        angle = arccos(dot(v1, v2) / (||v1|| * ||v2||))
+
+    Args:
+        population: List of sample dictionaries from the current block
+        best_sample: Current best input sample (dictionary)
+        gradient_dict: Dictionary mapping variable names to gradient values
+        keys_for_heuristic: List of variable names to consider for heuristic evaluation
+        thresholds: Dictionary of (min, max) bounds for each variable
+        assigned_fixed_keys: Optional dictionary of variables to keep fixed
+        compute_heuristic_code_path: Optional tuple (function, code_path) for path-aware updates
+        gradient_ascent_rate: Learning rate for gradient ascent
+        disable_gaussian_process: If True, use direct gradient computation instead of GP
+        minimize_is_better: If True, minimize instead of maximize
+        block_length: Size of sampling block
+        ignore_code_path: If True, ignore code path constraints
+        early_stop: If True, stop early if no good direction found
+
+    Returns:
+        Updated sample dictionary, or best_sample if no improvement found, or zero dict if no valid direction
+    """
+    if compute_heuristic_code_path is not None and disable_gaussian_process:
         # the gradient_dict is incomplete and we need to compute it
         x =  normal_gradient_ascent(
             best_sample,

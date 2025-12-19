@@ -124,7 +124,7 @@ def get_gp_config():
     return {
         "num_samples": 20,  # For GP
         "disable_gradient_ascent": False,
-        "disable_guassian_process": False,
+        "disable_gaussian_process": False,
     }
 
 
@@ -138,7 +138,7 @@ def get_direct_gradient_config():
     """
     return {
         "disable_gradient_ascent": False,
-        "disable_guassian_process": True,
+        "disable_gaussian_process": True,
     }
 
 
@@ -151,7 +151,7 @@ def no_gradient_ascent_config():
     """
     return {
         "disable_gradient_ascent": True,
-        "disable_guassian_process": True,
+        "disable_gaussian_process": True,
         "num_samples": 0,
     }
 

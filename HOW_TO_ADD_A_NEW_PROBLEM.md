@@ -510,7 +510,7 @@ def get_problem_description(args) -> dict:
             # MetaEase optimization parameters
             "max_num_scalable_klee_inputs": 200,
             "num_samples": 50,
-            "disable_guassian_process": False,
+            "disable_gaussian_process": False,
             "block_length": 0.1,
             "gradient_ascent_rate": 1.0,
             "use_gaps_in_filtering": True,
