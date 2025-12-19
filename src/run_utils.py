@@ -10,7 +10,6 @@ random.seed(91)
 from clustering_utils import *
 import sys
 
-DO_OPTIMAL_COMBINATION_SEARCH = False
 MAX_NUM_CORES = int(cpu_count() * 0.8)
 
 
@@ -885,79 +884,51 @@ def maximize_values_for_klee_path(
 
     # logger.info(f"Before processing: best_sample={best_sample}, max_gap={max_gap}")
 
-    if not DO_OPTIMAL_COMBINATION_SEARCH:
-        # logger.info("Using parallel processing mode")
-        # Always run gradient ascent, but use filtering results as starting point if available
-        if parameters["use_gaps_in_filtering"] and max_gap > float("-inf"):
-            logger.info(f"Found gap {max_gap} from filtering, but will still run gradient ascent to potentially improve it")
+    # logger.info("Using parallel processing mode")
+    # Always run gradient ascent, but use filtering results as starting point if available
+    if parameters["use_gaps_in_filtering"] and max_gap > float("-inf"):
+        logger.info(f"Found gap {max_gap} from filtering, but will still run gradient ascent to potentially improve it")
 
-        logger.info("Starting parallel processing of KLEE inputs")
-        (
-            results,
-            batch_max_gap,
-            batch_best_sample,
-            batch_best_optimal_all_vars,
-            batch_best_heuristic_all_vars,
-            worker_optimal_calls,
-            worker_heuristic_calls,
-        ) = process_klee_inputs_parallel(
-            filtered_klee_input_values,
-            problem,
-            save_dir,
-            parameters,
-            assigned_fixed_keys,
-            batch_size=None,
-            optimization_start_time=optimization_start_time,
-            filtered_results=filtered_results,  # Pass the filtered results
-        )
+    logger.info("Starting parallel processing of KLEE inputs")
+    (
+        results,
+        batch_max_gap,
+        batch_best_sample,
+        batch_best_optimal_all_vars,
+        batch_best_heuristic_all_vars,
+        worker_optimal_calls,
+        worker_heuristic_calls,
+    ) = process_klee_inputs_parallel(
+        filtered_klee_input_values,
+        problem,
+        save_dir,
+        parameters,
+        assigned_fixed_keys,
+        batch_size=None,
+        optimization_start_time=optimization_start_time,
+        filtered_results=filtered_results,  # Pass the filtered results
+    )
 
-        # Add the worker process counter values to the main problem instance
-        problem.num_compute_optimal_value_called += worker_optimal_calls
-        problem.num_compute_heuristic_value_called += worker_heuristic_calls
-        logger.info(f"Added {worker_optimal_calls} optimal calls and {worker_heuristic_calls} heuristic calls from worker processes")
-        logger.info(f"Parallel processing completed. Results: {len(results)}")
-        logger.info(f"Batch max gap: {batch_max_gap}")
-        # logger.info(f"Batch best sample: {batch_best_sample}")
-        # print(f"Completed processing all {len(results)} klee inputs")
-        # print(f"Maximum gap found in this batch: {batch_max_gap}")
+    # Add the worker process counter values to the main problem instance
+    problem.num_compute_optimal_value_called += worker_optimal_calls
+    problem.num_compute_heuristic_value_called += worker_heuristic_calls
+    logger.info(f"Added {worker_optimal_calls} optimal calls and {worker_heuristic_calls} heuristic calls from worker processes")
+    logger.info(f"Parallel processing completed. Results: {len(results)}")
+    logger.info(f"Batch max gap: {batch_max_gap}")
+    # logger.info(f"Batch best sample: {batch_best_sample}")
+    # print(f"Completed processing all {len(results)} klee inputs")
+    # print(f"Maximum gap found in this batch: {batch_max_gap}")
 
-        # Update best sample and max gap
-        if batch_max_gap >= max_gap:
-            max_gap = batch_max_gap
-            best_sample = batch_best_sample
-            best_optimal_all_vars = batch_best_optimal_all_vars
-            best_heuristic_all_vars = batch_best_heuristic_all_vars
-            # logger.info(f"Updated best_sample from parallel processing: {best_sample}")
-            logger.info(f"Updated max_gap from parallel processing: {max_gap}")
-        else:
-            logger.info(f"Parallel processing did not improve gap. Keeping existing best_sample: {best_sample}")
-
+    # Update best sample and max gap
+    if batch_max_gap >= max_gap:
+        max_gap = batch_max_gap
+        best_sample = batch_best_sample
+        best_optimal_all_vars = batch_best_optimal_all_vars
+        best_heuristic_all_vars = batch_best_heuristic_all_vars
+        # logger.info(f"Updated best_sample from parallel processing: {best_sample}")
+        logger.info(f"Updated max_gap from parallel processing: {max_gap}")
     else:
-        logger.info("Using optimal combination search mode")
-        process_klee_inputs_with_optimal_combination_search(
-            filtered_klee_input_values,
-            problem,
-            save_dir,
-            parameters,
-            batch_size=batch_size,
-        )
-        # For optimal combination search, we need to read the results from saved files
-        # since the function doesn't return results directly
-        for klee_idx in range(len(filtered_klee_input_values)):
-            results_dir = os.path.join(save_dir, f"klee_input_{klee_idx}")
-            if os.path.exists(os.path.join(results_dir, "gap_list.json")):
-                with open(os.path.join(results_dir, "gap_list.json"), "r") as f:
-                    gap_list = json.load(f)
-                with open(os.path.join(results_dir, "best_sample_list.json"), "r") as f:
-                    best_sample_list = json.load(f)
-                if gap_list:
-                    current_best_sample, current_max_gap = get_best_sample_and_gap(
-                        gap_list, best_sample_list
-                    )
-                    if current_max_gap >= max_gap:
-                        max_gap = current_max_gap
-                        best_sample = current_best_sample
-                        # logger.info(f"Updated best_sample from optimal search: {best_sample}")
+        logger.info(f"Parallel processing did not improve gap. Keeping existing best_sample: {best_sample}")
 
     # logger.info(f"Final values before saving: best_sample={best_sample}, max_gap={max_gap}")
 

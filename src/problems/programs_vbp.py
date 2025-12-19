@@ -665,28 +665,6 @@ class VBPProblem(Problem):
 
         print(f"Generated {len(result)} unique permutations")
         return result
-    # TODO: this function needs documentation as to when and where it should be used.
-    def get_optimal_value_based_on_combination(self, combination):
-        bin_ids = set()
-        for key, value in combination.items():
-            if "aux_placement_item" in key and int(value) == 1:
-                bin_ids.add(int(key.split("_")[5]))
-        return len(bin_ids)
-    # TODO: this function needs documentation as to when and where it should be used.
-    def get_all_binary_combinations(self):
-        all_combinations = []
-        num_items = self.num_items
-        num_bins = self.num_items
-        # Each element in `product` is a tuple of bin indices (one for each item)
-        for bin_assignment in product(range(num_bins), repeat=num_items):
-            combination = {}
-            for item_idx in range(num_items):
-                for bin_idx in range(num_bins):
-                    key = f"aux_placement_item_{item_idx}_bin_{bin_idx}"
-                    combination[key] = 1 if bin_assignment[item_idx] == bin_idx else 0
-            all_combinations.append(combination)
-
-        return all_combinations
 
     def convert_input_dict_to_args(self, input_dict):
         items = []
