@@ -393,7 +393,6 @@ If you use this code in your research, please cite our paper:
 ```
 
 Also, you can checkout the other heuristic analysis tools our team has produced:
-XPlain: Towards Safer Heuristics With XPlain
 
 ```bibtex
 @inproceedings{10.1145/3696348.3696884,
