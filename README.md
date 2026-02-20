@@ -392,7 +392,7 @@ If you use this code in your research, please cite our paper:
 }
 ```
 
-Also, you can checkout my other heuristic analysis tool:
+Also, you can checkout the other heuristic analysis tools our team has produced:
 XPlain: Towards Safer Heuristics With XPlain
 
 ```bibtex
@@ -412,4 +412,27 @@ numpages = {9},
 keywords = {Domain-Specific Language, Explainable Analysis, Heuristic Analysis},
 location = {Irvine, CA, USA},
 series = {HotNets '24}
+}
+
+@inproceedings{metaopt,
+  author = {Namyar, Pooria and Arzani, Behnaz and Beckett, Ryan and Segarra, Santiago and Raj, Himanshu and Krishnaswamy, Umesh and Govindan, Ramesh and Kandula, Srikanth},
+  title = {{F}inding {A}dversarial {I}nputs for {H}euristics using
+                    {M}ulti-level {O}ptimization},
+  booktitle = {21st USENIX Symposium on Networked Systems Design and
+                    Implementation (NSDI 24)},
+  year = {2024},
+}
+
+@inproceedings{Raha,
+  author = {Arzani, Behnaz and Taheri, Sina and Namyar, Pooria, and Beckett, Ryan, and Kakarla, Siva and Jallilipour, Elnaz},
+  title = {{R}aha: {A} {G}eneral {T}ool to {A}nalyze {W}AN {D}egradation},
+  booktitle = {Proceedings of the ACM SIGCOMM 2025 Conference},
+  year = {2025},
+}
+
+@inproceedings{10.1145/3563766.3564102,
+  author = {Namyar, Pooria and Arzani, Behnaz and Beckett, Ryan and Segarra, Santiago and Raj, Himanshu and Kandula, Srikanth},
+  title = {Minding the gap between fast heuristics and their optimal counterparts},
+  booktitle = {Proceedings of the 21st ACM Workshop on Hot Topics in Networks},
+  year = {2022}
 }
